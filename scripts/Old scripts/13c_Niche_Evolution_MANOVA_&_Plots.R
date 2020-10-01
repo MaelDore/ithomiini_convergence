@@ -1,4 +1,4 @@
-##### Niche Evolution : MANOVA tests et plots des espèces/units dans l'espace climatique #####
+##### Niche Evolution : MANOVA tests et plots des esp?ces/units dans l'espace climatique #####
 
 ### Preparation ###
 
@@ -96,9 +96,9 @@ reduced.phylo.Ithomiini.units <- drop.tip(phy = phylo.Ithomiini.units, tip = rem
 
 
 
-##### permMANOVA without phylogenetic correction 
+##### permMANOVA without phylogenetic correction ####
 
-### On 5 bioclim variables
+### On 5 bioclim variables ####
 
 unit.env.table <- reduced.list.models[,c("bio1","bio3","bio4","bio12","bio15")]
 
@@ -109,21 +109,21 @@ library("vegan")
 
 permMANOVA.5 <- adonis(formula = as.matrix(scale(unit.env.table)) ~ reduced.list.models$Mimicry.model, permutations = 999, method = "euclidian", strata = NULL, by = "margin") 
 # Strata = pour contraindre les permutations au sein des groupes # Can be used to constrain under phylogeny ?
-# By = "terms" pour Anova type I ; By = "margin" pour Anova type II. Ici, une seule variable explicative donc ça ne change rien !
+# By = "terms" pour Anova type I ; By = "margin" pour Anova type II. Ici, une seule variable explicative donc ?a ne change rien !
 print(permMANOVA.5) # Sortie de la PERMANOVA
-str(permMANOVA.5) # Pour explorer en détails les coeffs, les résultats des F des permutations, la model.matrix, ...
+str(permMANOVA.5) # Pour explorer en d?tails les coeffs, les r?sultats des F des permutations, la model.matrix, ...
 
 # Post-hoc test if significant to detect between each modalities of the factor the difference is significant
 library("RVAideMemoire")
 
 ?pairwise.perm.manova
-# Pour les différents tests, voir ?anova.mlm
-# pour les différentes corrections de p-value due aux multiples tests, voir ?p.adjust
+# Pour les diff?rents tests, voir ?anova.mlm
+# pour les diff?rentes corrections de p-value due aux multiples tests, voir ?p.adjust
 Pairwise.permMANOVA.5 <- pairwise.perm.manova(resp = as.matrix(scale(unit.env.table)), fact = reduced.list.models$Mimicry.model, nperm = 999, progress = T, p.method = "none", test = "Wilks")
 Pairwise.permMANOVA.5
 save(Pairwise.permMANOVA.5, file = paste0(internal.wd, "/Niche_evolution/Pairwise.permMANOVA.5.RData"))
 
-### On 2 Revell's pPC axis
+### On 2 Revell's pPC axis ####
 
 unit.env.table <- reduced.list.models[,c("bio1","bio3","bio4","bio12","bio15")]
 
@@ -143,10 +143,10 @@ library(ade4)
 
 
 
-ACP <-  dudi.pca(df = unit.env.table, center = T, scale = T, scannf = F, nf = 2) # Génère l'ACP et le graph des éboulis directement depuis les données brutes
-round(ACP$eig/sum(ACP$eig)*100,3) # % Variance expliquée
-cumsum(round(ACP$eig/sum(ACP$eig)*100,3)) # % Variance expliquée cumulative
-# 92% de la variance expliquée avec les 2 premiers axes, on ne garde que ces deux axes !
+ACP <-  dudi.pca(df = unit.env.table, center = T, scale = T, scannf = F, nf = 2) # G?n?re l'ACP et le graph des ?boulis directement depuis les donn?es brutes
+round(ACP$eig/sum(ACP$eig)*100,3) # % Variance expliqu?e
+cumsum(round(ACP$eig/sum(ACP$eig)*100,3)) # % Variance expliqu?e cumulative
+# 92% de la variance expliqu?e avec les 2 premiers axes, on ne garde que ces deux axes !
 
 s.corcircle(ACP$co,xax=1,yax=2) # Pour tracer le cercle des correlations entre variables d'origine et CP. On peut choisir quelles CP sont repr?sent?es sur les axes x et y
 
@@ -163,18 +163,18 @@ library("vegan")
 
 permMANOVA.pPC <- adonis(formula = as.matrix(reduced.PC.env) ~ reduced.list.models$Mimicry.model, permutations = 999, method = "euclidian", strata = NULL, by = "margin") 
 # Strata = pour contraindre les permutations au sein des groupes # Can be used to constrain under phylogeny ?
-# By = "terms" pour Anova type I ; By = "margin" pour Anova type II. Ici, une seule variable explicative donc ça ne change rien !
+# By = "terms" pour Anova type I ; By = "margin" pour Anova type II. Ici, une seule variable explicative donc ?a ne change rien !
 print(permMANOVA.pPC) # Sortie de la PERMANOVA
-str(permMANOVA.pPC) # Pour explorer en détails les coeffs, les résultats des F des permutations, la model.matrix, ...
+str(permMANOVA.pPC) # Pour explorer en d?tails les coeffs, les r?sultats des F des permutations, la model.matrix, ...
 save(permMANOVA.pPC, file = paste0(internal.wd, "/Niche_evolution/permMANOVA.pPC.RData"))
 load(file = paste0(internal.wd, "/Niche_evolution/permMANOVA.pPC.RData"))
 
-# Post-hoc test if significant to detect between each modalities of the factor the difference is significant
+# Post-hoc test if significant to detect between each modalities of the factor the difference is significant ####
 library("RVAideMemoire")
 
 ?pairwise.perm.manova
-# Pour les différents tests, voir ?anova.mlm
-# pour les différentes corrections de p-value due aux multiples tests, voir ?p.adjust
+# Pour les diff?rents tests, voir ?anova.mlm
+# pour les diff?rentes corrections de p-value due aux multiples tests, voir ?p.adjust
 Pairwise.permMANOVA.pPC <- pairwise.perm.manova(resp = as.matrix(reduced.PC.env), fact = reduced.list.models$Mimicry.model, nperm = 999, progress = T, p.method = "none", test = "Wilks")
 Pairwise.permMANOVA.pPC
 save(Pairwise.permMANOVA.pPC, file = paste0(internal.wd, "/Niche_evolution/Pairwise.permMANOVA.pPC.RData"))
@@ -214,11 +214,13 @@ plot(raster(x = ordered.Pseudo_Cor_mat_perMANOVA), col = pal_bl_red,
                     labels=round((c(0,0.2,0.4,0.6,0.8,1)^5.8), digits = 3)))
 dev.off()
 
-##### Phylogenetic MANOVA 
 
-### Can only be done on PC axis because we don't have a good evolutionnary model for the 5 original dimensions
 
-# Simulate variables following the best evolutionnary model (but calibrated at species level...)
+##### Phylogenetic MANOVA ####
+
+### Can only be done on PC axis because we don't have a good evolutionary model for the 5 original dimensions
+
+# Simulate variables following the best evolutionary model (but calibrated at species level...)
 
 load(file = paste0(internal.wd, "/Niche_evolution/best.model.for.pPC_evol"))
 
@@ -228,7 +230,7 @@ Sim.Revell.res <- sim.traits(tree = phylo.Ithomiini.units, v = best.model$browni
 
 str(Sim.Revell.res)
 plot(Sim.Revell.res$tree) # Arbre original
-plot(Sim.Revell.res$sim_tree) # Arbre après tranformation via lambda = 0.47
+plot(Sim.Revell.res$sim_tree) # Arbre apr?s tranformation via lambda = 0.47
 
 Sim.Revell.PC <- Sim.Revell.res$trait_data # Liste des simulations
 
@@ -328,9 +330,9 @@ rgl::points3d(x = NMDS$points[index,], col= rainbow(44)[as.factor(list.sp$Mimicr
 
 library(ade4) 
 
-ACP <-  dudi.pca(df = sp.env.table, center = T, scale = T, scannf = F, nf = 2) # Génère l'ACP et le graph des éboulis directement depuis les données brutes
-round(ACP$eig/sum(ACP$eig)*100,3) # % Variance expliquée
-cumsum(round(ACP$eig/sum(ACP$eig)*100,3)) # % Variance expliquée cumulative
+ACP <-  dudi.pca(df = sp.env.table, center = T, scale = T, scannf = F, nf = 2) # G?n?re l'ACP et le graph des ?boulis directement depuis les donn?es brutes
+round(ACP$eig/sum(ACP$eig)*100,3) # % Variance expliqu?e
+cumsum(round(ACP$eig/sum(ACP$eig)*100,3)) # % Variance expliqu?e cumulative
 
 s.corcircle(ACP$co,xax=1,yax=2) # Pour tracer le cercle des correlations entre variables d'origine et CP. On peut choisir quelles CP sont repr?sent?es sur les axes x et y
 
@@ -375,9 +377,9 @@ PCA.Revell$Evec # eigenvectors
 PCA.Revell$S # scores
 PCA.Revell$L # PC loadings
 
-PCvar <- round(diag(PCA.Revell$Eval)/sum(PCA.Revell$Eval),3) ; PCvar # % Variance expliquée
-cumVar <- round(cumsum(diag(PCA.Revell$Eval))/sum(PCA.Revell$Eval),3) ; cumVar # % Variance expliquée cumulative
-# 91% de la variance expliquée avec les 2 premiers axes, on ne garde que ces deux axes !
+PCvar <- round(diag(PCA.Revell$Eval)/sum(PCA.Revell$Eval),3) ; PCvar # % Variance expliqu?e
+cumVar <- round(cumsum(diag(PCA.Revell$Eval))/sum(PCA.Revell$Eval),3) ; cumVar # % Variance expliqu?e cumulative
+# 91% de la variance expliqu?e avec les 2 premiers axes, on ne garde que ces deux axes !
 
 library(ade4)
 s.corcircle(PCA.Revell$L, xax=1, yax=2, label = names(sp.env.table)) # Pour tracer le cercle des correlations entre variables d'origine et CP. On peut choisir quelles CP sont repr?sent?es sur les axes x et y
@@ -450,13 +452,13 @@ PCA.Revell.unit <- Revell_phyl_pca(C, X, mode = "corr")
 
 library(ade4) 
 
-ACP.unit <-  dudi.pca(df = unit.env.table, center = T, scale = T, scannf = F, nf = 2) # Génère l'ACP et le graph des éboulis directement depuis les données brutes
-PCvar <- round(ACP.unit$eig/sum(ACP.unit$eig)*100,1) ; PCvar # % Variance expliquée
-cumsum(round(ACP.unit$eig/sum(ACP.unit$eig)*100,1)) # 92 % Variance expliquée cumulative
+ACP.unit <-  dudi.pca(df = unit.env.table, center = T, scale = T, scannf = F, nf = 2) # G?n?re l'ACP et le graph des ?boulis directement depuis les donn?es brutes
+PCvar <- round(ACP.unit$eig/sum(ACP.unit$eig)*100,1) ; PCvar # % Variance expliqu?e
+cumsum(round(ACP.unit$eig/sum(ACP.unit$eig)*100,1)) # 92 % Variance expliqu?e cumulative
 
 s.corcircle(ACP.unit$co,xax=1,yax=2) # Pour tracer le cercle des correlations entre variables d'origine et CP. On peut choisir quelles CP sont repr?sent?es sur les axes x et y
 
-# On utilise abusivement le terme pPCA... (mais le résultat est quand même hyper similaire dans tous les cas)
+# On utilise abusivement le terme pPCA... (mais le r?sultat est quand m?me hyper similaire dans tous les cas)
 
 plot(ACP.unit$li, col = "grey80", main = "pPCA of OMUs in climatic space", xlab = paste0("pPC1 (", PCvar[1] ," %)"), ylab = paste0("pPC2 (", PCvar[2] ," %)"))
 points(ACP.unit$li, pch = 16, col = rainbow(44)[as.factor(list.models$Mimicry.model)])

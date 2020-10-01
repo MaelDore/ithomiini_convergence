@@ -1,0 +1,5 @@
+;Model;Likelihood;AICc;lambda;kappa
+1;BM;-1689.36;3382.756;NA;NA
+2;Lambda;-1506.043;3018.158;0.408;NA
+3;Kappa;-1553.857;3113.786;NA;0.169
+4;Kappa - Lambda;-1503.552;3015.224;0.01;0.39

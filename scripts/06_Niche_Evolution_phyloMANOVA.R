@@ -986,15 +986,18 @@ load(file = paste0("./outputs/Niche_evolution/Evol_simul/MCD_null_stats_719.RDat
 load(file = paste0("./outputs/Niche_evolution/Evol_simul/Wilks_lambda_obs_pPCA.RData"))
 load(file = paste0("./outputs/Niche_evolution/Evol_simul/Wilks_lambda_null_pPCA.RData"))
 
+round(Comimic_MCD_obs_std, 3) # MCD obs = 0.782
+format(round(Wilks_lambda_obs_pPCA, 3), nsmall = 3) # Lambda obs = 0.271
 
 pdf(file = "./graphs/Niche_evolution/Evol_simul/MCD_&_Wilks_lambda_both_plots.pdf", height = 6.4, width = 14)
 
 original_ext_margins <- par()$oma
 original_int_margins <- par()$mar
-par(oma = c(0,0,0,0), mar = c(4.5,5,1.5,1), mfrow = c(1,2))
+par(oma = c(0,0,0,0), mar = c(4.5,5,1.5,1.3), mfrow = c(1,2))
 
-
-hist(x = c(Comimic_MCD_std_null, Comimic_MCD_obs_std), breaks = 30, freq = TRUE, col = "gray",
+hist(x = c(Comimic_MCD_std_null, Comimic_MCD_obs_std),
+     breaks = seq(0.76, 1.05, 0.05/3),
+     freq = TRUE, col = "gray",
      xlim = c(0.75, 1.05),
      # ylim = c(0, 200),
      # main = "Distribution of the Mean Climatic Distance \n of co-mimetic OMUs \n under neutral evolution",
@@ -1002,48 +1005,56 @@ hist(x = c(Comimic_MCD_std_null, Comimic_MCD_obs_std), breaks = 30, freq = TRUE,
      xlab = "Standardized Mean pairwise Climatic Distance",
      cex.axis = 1.7, cex.lab = 1.8, cex.main = 1.2, lwd = 2)
 
-arrows(Comimic_MCD_obs_std + 0.003, 110, Comimic_MCD_obs_std + 0.003, 5, length = 0.1, lwd = 2)  # Draw arrow above mean BC obs
+arrows(Comimic_MCD_obs_std + 0.003, 160, Comimic_MCD_obs_std + 0.003, 10, length = 0.1, lwd = 2)  # Draw arrow above mean BC obs
 abline(v = mean(c(Comimic_MCD_std_null, Comimic_MCD_obs_std)), lwd = 2, lty = 2) # Add vertical line for mean value
 abline(v = quantile(c(Comimic_MCD_std_null, Comimic_MCD_obs_std), 0.05), lwd = 2, lty = 2, col = "red") # Add vertical line for 95% value
 
 legend(legend = c(paste0("Mean = ", format(round(mean(c(Comimic_MCD_std_null, Comimic_MCD_obs_std)),3), nsmall = 3)), 
                   paste0("CI 5% = ", round(quantile(c(Comimic_MCD_std_null, Comimic_MCD_obs_std), 0.05),3))), 
-       x = "topleft", inset = c(0.02, 0.05), 
-       lty = 2 , lwd = 2, col = c("black", "red"), cex = 1.3, bty = "n")
-legend(legend = c(paste0("MCD obs = ", round(Comimic_MCD_obs_std, 3)),
-                  paste0("p = 0.001")),
-       x = "left", inset = c(0.05, -0.05),
-       cex = 1.3, bty ="n", xjust = 1)
+       x = "topleft", inset = c(0.02, 0.15), 
+       lty = 2 , lwd = 2, col = c("black", "red"), cex = 1.6, bty = "n")
+
+legend(legend = c(as.expression(bquote(bold("MCD obs = 0.782"))),
+                  as.expression(bquote(bold("p = 0.001")))),
+       x = "left", inset = c(0.045, -0.05),
+       cex = 1.6, bty ="n", xjust = 1)
 
 legend(legend = as.expression(bquote(bold("A"))), 
-       x = "topright", inset = c(0.05, 0.001), xjust = 0.5,
+       x = "topleft", inset = c(-0.03, -0.03), xjust = 0.5,
        cex = 1.8, bty ="n")
 
 
-hist(c(Wilks_lambda_null_pPCA, Wilks_lambda_obs_pPCA), 30, freq = TRUE, col = "gray", 
+hist(c(Wilks_lambda_null_pPCA, Wilks_lambda_obs_pPCA),
+     breaks = seq(0.2, 1.0, 0.2/6),
+     freq = TRUE, col = "gray", 
      # main = bquote("Phylogenetic MANOVA \n Distribution of Wilks" ~lambda~ "\n under neutral evolution"),
      main = "",
      xlab = bquote("Wilks'" ~lambda),
      xlim = c(0.2, 1.0),
      cex.axis = 1.7, cex.lab = 1.8, cex.main = 1.2, lwd = 2)
 
-arrows(Wilks_lambda_obs_pPCA - 0.002, 100, Wilks_lambda_obs_pPCA - 0.002, 5, length = 0.1, lwd = 2)
+arrows(Wilks_lambda_obs_pPCA + 0.012, 160, Wilks_lambda_obs_pPCA + 0.012, 10, length = 0.1, lwd = 2)
 abline(v = mean(c(Wilks_lambda_null_pPCA, Wilks_lambda_obs_pPCA)), lty = 2, lwd = 2)
 abline(v = quantile(c(Wilks_lambda_null_pPCA, Wilks_lambda_obs_pPCA), 0.05), lty = 2, lwd = 2, col = "red")
 
 legend(legend = c(paste0("Mean = ", round(mean(c(Wilks_lambda_null_pPCA, Wilks_lambda_obs_pPCA)),3)), 
                   paste0("CI 5% = ", round(quantile(c(Wilks_lambda_null_pPCA, Wilks_lambda_obs_pPCA), 0.05),3))), 
-       x = "topleft", inset = c(0.02, 0.05), lty = 2 , lwd = 2, col = c("black", "red"), cex = 1.3, bty ="n")
+       x = "topleft", inset = c(0.02, 0.15), lty = 2 , lwd = 2, col = c("black", "red"), cex = 1.6, bty ="n")
 
-legend(legend = bquote(lambda ~ "obs =" ~ .(format(round(Wilks_lambda_obs_pPCA, 3), nsmall = 3))),
-       x = "bottomleft", cex = 1.3, bty ="n",
-       inset = c(0.03, 0.45))
-legend(legend = paste0("p = ", round(ecdf(x = c(Wilks_lambda_null_pPCA, Wilks_lambda_obs_pPCA))(Wilks_lambda_obs_pPCA),3)),
-       x = "bottomleft", cex = 1.3, bty ="n", y.intersp = 2.1,
-       inset = c(0.03, 0.37))
+# legend(legend = bquote(lambda ~ "obs =" ~ .(format(round(Wilks_lambda_obs_pPCA, 3), nsmall = 3))),
+#        x = "bottomleft", cex = 1.6, bty ="n",
+#        inset = c(0.03, 0.45))
+# legend(legend = paste0("p = ", round(ecdf(x = c(Wilks_lambda_null_pPCA, Wilks_lambda_obs_pPCA))(Wilks_lambda_obs_pPCA),3)),
+#        x = "bottomleft", cex = 1.6, bty ="n", y.intersp = 2.1,
+#        inset = c(0.03, 0.365))
+
+legend(legend = c(as.expression(bquote(bold(paste(lambda ~ "obs = 0.271")))),
+                  as.expression(bquote(bold(paste("p = 0.001"))))),
+       x = "bottomleft", inset = c(0.03, 0.40), xjust = 1, # Use inset to manually adjust position
+       cex = 1.6, bty ="n", bg = "white", box.col = NA)
 
 legend(legend = as.expression(bquote(bold("B"))), 
-       x = "topright", inset = c(0.05, 0.001), xjust = 0.5,
+       x = "topleft", inset = c(-0.03, -0.03), xjust = 0.5,
        cex = 1.8, bty ="n")
 
 

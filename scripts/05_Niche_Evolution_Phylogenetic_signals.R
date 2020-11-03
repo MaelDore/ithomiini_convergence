@@ -605,13 +605,18 @@ load(file = paste0("./outputs/Niche_evolution/Phylo_signal/Global_MPD_null.RData
 
 load(file = paste0("./outputs/Niche_evolution/Phylo_signal/test.Kmult.Rdata"))
 
+round(Global_MPD_obs, 2) # MPD obs = 34.43
+format(round(test.Kmult$phy.signal, 3), nsmall = 3) # Kmult obs = 0.120
+
 pdf(file = "./graphs/Niche_evolution/Phylo_signal/MPD_&_Kmult_both_plots.pdf", height = 6.4, width = 14)
 
 original_ext_margins <- par()$oma
 original_int_margins <- par()$mar
 par(oma = c(0,0,0,0), mar = c(4.5,5,1.5,1), mfrow = c(1,2))
 
-hist(x = c(Global_MPD_null, Global_MPD_obs), breaks = 40, freq = TRUE, col = "gray",
+hist(x = c(Global_MPD_null, Global_MPD_obs), 
+     breaks = 20, 
+     freq = TRUE, col = "gray",
      # xlim = c(34.5, 38.0),
      # ylim = c(0, 200),
      # main = "Distribution of the Mean pairwise Phylogenetic Distance \nof co-mimetic OMUs \nunder the null hypothesis",
@@ -619,49 +624,61 @@ hist(x = c(Global_MPD_null, Global_MPD_obs), breaks = 40, freq = TRUE, col = "gr
      xlab = "Mean pairwise Phylogenetic Distance [My]",
      cex.axis = 1.7, cex.lab = 1.8, cex.main = 1.2, lwd = 2)
 
-arrows(Global_MPD_obs + 0.015, 60, Global_MPD_obs+ 0.015, 5, length = 0.1, lwd = 2)  # Draw arrow above mean BC obs
+arrows(Global_MPD_obs + 0.055, 120, Global_MPD_obs+ 0.055, 5, length = 0.1, lwd = 2)  # Draw arrow above mean BC obs
 abline(v = mean(c(Global_MPD_null, Global_MPD_obs)), lwd = 2, lty = 2) # Add vertical line for mean value
 abline(v = quantile(c(Global_MPD_null, Global_MPD_obs), 0.05), lwd = 2, lty = 2, col = "red") # Add vertical line for 95% value
 
 legend(legend = c(paste0("Mean = ", round(mean(c(Global_MPD_null, Global_MPD_obs)),2)), 
                   paste0("CI 5% = ", round(quantile(c(Global_MPD_null, Global_MPD_obs), 0.05),2))), 
-       x = "topleft", inset = c(0.02, 0.025), 
-       lty = 2 , lwd = 2, col = c("black", "red"), cex = 1.3, bty = "n")
-legend(legend = c(paste0("MPD obs = ", round(Global_MPD_obs, 2)),
-                  paste0("p = 0.001")),
-       x = "bottomleft", inset = c(-0.03, 0.40),
-       cex = 1.3, bty ="n", xjust = 1)
+       x = "topleft", inset = c(0.00, 0.15), 
+       lty = 2 , lwd = 2, col = c("black", "red"), cex = 1.6, bty = "n")
+
+legend(legend = c(as.expression(bquote(bold("MPD obs = 34.43"))),
+                  as.expression(bquote(bold("p = 0.001")))),
+       x = "bottomleft", inset = c(-0.035, 0.40),
+       cex = 1.6, bty ="n", xjust = 1)
 
 legend(legend = as.expression(bquote(bold("A"))), 
-       x = "topright", inset = c(0.05, 0.001), xjust = 0.5,
+       x = "topleft", inset = c(-0.03, -0.03), xjust = 0.5,
        cex = 1.8, bty ="n")
 
-hist(test.Kmult$K.simul.val, 30, freq = TRUE, col = "gray", 
+hist(c(test.Kmult$K.simul.val, test.Kmult$phy.signal),
+     breaks = seq(0, 0.22, 0.01),
+     freq = TRUE, col = "gray", 
      # main = bquote('Distribution of' ~K[mult]~ 'of the climatic niche\nunder null Hypothesis'),
      main = "",
-     xlim = c(0.02, 0.16),
+     xlim = c(0.00, 0.22),
      xlab = bquote(~K[mult]~ 'index'),
      cex.axis = 1.7, cex.lab = 1.8, cex.main = 1.2, lwd = 2)
 
-arrows(test.Kmult$phy.signal, 50, test.Kmult$phy.signal, 5, length = 0.1, lwd = 2)
+arrows(test.Kmult$phy.signal, 95, test.Kmult$phy.signal, 5, length = 0.1, lwd = 2)
 abline(v = mean(test.Kmult$K.simul.val), lty = 2, lwd = 2)
 abline(v = quantile(test.Kmult$K.simul.val, 0.95), lty = 2, lwd = 2, col = "red")
 
 legend(legend = c(paste0("Mean = ", round(mean(test.Kmult$K.simul.val),3)), 
                   paste0("CI 95% = ", round(quantile(test.Kmult$K.simul.val, 0.95),3))), 
-       x = "topleft", inset = c(0.02, 0.025), lty = 2 , lwd = 2, col = c("black", "red"), cex = 1.3, bty ="n")
+       x = "topright", inset = c(0.02, 0.15), lty = 2 , lwd = 2,
+       col = c("black", "red"), cex = 1.6, bty ="n")
 
-legend(legend = bquote("  " ~K[mult]~ "obs =" ~ .(format(round(test.Kmult$phy.signal, 3), nsmall = 3))),
-       x = "bottomright", cex = 1.3, bty ="n",
-       inset = c(0.018, 0.435))
+# legend(legend = bquote("  " ~K[mult]~ "obs =" ~ .(format(round(test.Kmult$phy.signal, 3), nsmall = 3))),
+#        x = "bottomright", cex = 1.3, bty ="n",
+#        inset = c(0.018, 0.435))
+# legend(legend = c("",
+#                   paste0("p = ", test.Kmult$pvalue)),
+#        x = "bottomright", cex = 1.3, bty ="n", y.intersp = 2.1,
+#        inset = c(0.142, 0.35))
+
+legend(legend = as.expression(bquote(bold(K[mult]~ "obs = 0.120"))),
+       x = "bottomright", cex = 1.6, bty ="n",
+       inset = c(0.10, 0.435))
 legend(legend = c("",
-                  paste0("p = ", test.Kmult$pvalue)),
-       x = "bottomright", cex = 1.3, bty ="n", y.intersp = 2.1,
-       inset = c(0.142, 0.35))
+                  as.expression(bquote(bold(paste("p = 0.013"))))),
+       x = "bottomright", cex = 1.6, bty ="n", y.intersp = 2.1,
+       inset = c(0.26, 0.345))
 
 legend(legend = as.expression(bquote(bold("B"))), 
-       x = "topright", inset = c(0.05, 0.001), xjust = 0.5,
-       cex = 1.8, bty ="n")
+       x = "topright", inset = c(0.05, -0.03), xjust = 0.5,
+       cex = 1.9, bty ="n")
 
 par(oma = original_ext_margins, mar = original_int_margins, mfrow = c(1,1))
 

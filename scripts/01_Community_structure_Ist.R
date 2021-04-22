@@ -45,7 +45,7 @@ simpson <- function (x, na.rm) {
   return(y)
 }
 
-# From Dore et al., 2020 - Global diversity patterns in Ithomiine butterflies in the face of human impacts ###
+# From Dore et al., 2021 - Anthropogenic pressures coincide with Neotropical biodiversity hotspots in a flagship butterfly group ###
 
 # Load summary table for OMU list
 load(file = paste0("./input_data/Summary_tables/list.unit.RData"))

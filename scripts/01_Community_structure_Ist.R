@@ -1,4 +1,4 @@
-##### Community composition analysis with Ist #####
+##### Script 01: Community composition analysis with Ist #####
 
 # Compute Ist for all communities
 # Test signifiance through randomisation of mimicry pattern
@@ -122,7 +122,7 @@ mimicry.list <- as.character(unique(list.unit$Mimicry.model)) # 44 Mimicry rings
 
 ## Start the loop to shuffle mimicry patterns among OMUs
 Ist_null <- NA
-for (k in 1:1000) # 1000 permutations
+for (k in 1:999) # 999 permutations
 { 
   # k <- 1
   

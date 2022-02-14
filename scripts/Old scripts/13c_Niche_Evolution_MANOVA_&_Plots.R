@@ -163,9 +163,9 @@ library("vegan")
 
 permMANOVA.pPC <- adonis(formula = as.matrix(reduced.PC.env) ~ reduced.list.models$Mimicry.model, permutations = 999, method = "euclidian", strata = NULL, by = "margin") 
 # Strata = pour contraindre les permutations au sein des groupes # Can be used to constrain under phylogeny ?
-# By = "terms" pour Anova type I ; By = "margin" pour Anova type II. Ici, une seule variable explicative donc ?a ne change rien !
+# By = "terms" pour Anova type I ; By = "margin" pour Anova type II. Ici, une seule variable explicative donc ça ne change rien !
 print(permMANOVA.pPC) # Sortie de la PERMANOVA
-str(permMANOVA.pPC) # Pour explorer en d?tails les coeffs, les r?sultats des F des permutations, la model.matrix, ...
+str(permMANOVA.pPC) # Pour explorer en détails les coeffs, les résultats des F des permutations, la model.matrix, ...
 save(permMANOVA.pPC, file = paste0(internal.wd, "/Niche_evolution/permMANOVA.pPC.RData"))
 load(file = paste0(internal.wd, "/Niche_evolution/permMANOVA.pPC.RData"))
 

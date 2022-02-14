@@ -1,4 +1,4 @@
-##### perMANOVA to test association between climatic niches and mimicry rings without accounting for phylogeny #####
+##### Script 04: perMANOVA to test association between climatic niches and mimicry rings without accounting for phylogeny #####
 
 # Test for association between climatic niches and mimicry rings without accounting for phylogeny
 
@@ -21,7 +21,7 @@
 # Plot heatmap of p-values from pairwise tests
 
 
-# Effacer l'environnement
+# Clean environment
 rm(list = ls())
 
 library(raster)
@@ -98,6 +98,8 @@ reduced.list.unit_phyl_order <- list.unit[list.unit$Mimicry.model %in% big.rings
 nrow(reduced.list.unit_phyl_order) # 619 units instead of 719
 save(reduced.list.unit_phyl_order, file = paste0("./outputs/Niche_evolution/reduced.list.unit_phyl_order.RData"))
 
+load(file = paste0("./outputs/Niche_evolution/reduced.list.unit_phyl_order.RData"))
+
 # Remove OMUs tips not in the list of big rings
 ?drop.tip
 
@@ -113,6 +115,8 @@ for (i in 1:length(OMU_to_drop)) {
 
 save(reduced.phylo.Ithomiini.units, file = paste0("./input_data/Phylogenies/reduced.phylo.Ithomiini.units.RData"))
 write.nexus(reduced.phylo.Ithomiini.units, file = paste0("./input_data/Phylogenies/reduced.phylo.Ithomiini.units.nex"), translate = F)  
+
+load(file = paste0("./input_data/Phylogenies/reduced.phylo.Ithomiini.units.RData"))
 
 
 ##### 4/ Barplot of nb of OMUs per ring ####
@@ -472,6 +476,7 @@ top5.index <- (reduced.list.unit_phyl_order$Mimicry.model %in% top5.ring.list)
 # top9.index <- (reduced.list.unit_phyl_order$Mimicry.model %in% top9.ring.list) 
 save(top5.index, file = paste0("./outputs/Niche_evolution/permMANOVA/top5.index.RData"))
 
+load(file = paste0("./outputs/Niche_evolution/permMANOVA/top5.index.RData"))
 
 # # Build minimum convex polygon for the 9 main circles
 # 
@@ -508,31 +513,40 @@ pdf(file = "./graphs/Niche_evolution/permMANOVA/pPCA_Top5.pdf", height = 7.5, wi
 original_int_margins <- par()$mar
 par(mar = c(5.1,5,4.1,2.1))
 
-plot(pPC.env_units, col = "grey90", main = "pPCA of OMUs in climatic space", 
+plot(pPC.env_units, col = "grey90", main = "", 
      xlab = paste0("pPC1 (", round(PCvar[1]*100,1) ," %)"), ylab = paste0("pPC2 (", round(PCvar[2]*100,1) ," %)"),
      pch = 16, type = "p", axes = F, ylim = c(-6, 6), xlim = c(-6, 6),
-     cex.axis = 1.5, cex.lab = 1.6, cex.main = 1.3)
-axis(side = 1, lwd = 2, cex.axis = 1.5)
-axis(side = 2, lwd = 2, cex.axis = 1.5)
+     cex.axis = 1.7, cex.lab = 1.8, cex.main = 1.3)
+axis(side = 1, lwd = 2, cex.axis = 1.7)
+axis(side = 2, lwd = 2, cex.axis = 1.7)
+
 points(pPC.env_units[top5.index,], pch = 16, col = c("black","red","deepskyblue","limegreen","orange","blue")[factor(reduced.list.unit_phyl_order$Mimicry.model[top5.index])])
-legend(x = "bottomright", pch = 16, cex = 1.1, legend = mimic.list_legend, 
+
+legend(x = "bottomright", pch = 16, cex = 1.3, legend = mimic.list_legend[3:5], 
        bty = "n", inset = c(0.02, 0.00), # horiz = T, 
-       col = c("black","red","deepskyblue","limegreen","orange","blue"))
-arrows(x0 = rep(0, nrow(pPCA_correl)), y0 = rep(0, nrow(pPCA_correl)), x1 = pPCA_correl[,1]*4, y1 =  pPCA_correl[,2]*4, length = 0.2, code = 2, lwd = 1)
+       col = c("black","red","deepskyblue","limegreen","orange","blue")[3:5])
+legend(x = "bottomright", pch = 16, cex = 1.3, legend = mimic.list_legend[1:2], 
+       bty = "n", inset = c(0.32, 0.00), # horiz = T, 
+       col = c("black","red","deepskyblue","limegreen","orange","blue")[1:2])
 
-# for (i in 1:length(mimic.list_legend)) 
-# {
-#   ring <- mimic.list[i]
-#   ring_legend <- mimic.list_legend[i]
-#   load(file = paste0("./outputs/Niche_evolution/permMANOVA/mcp/mcp.ring_", ring, ".RData"))
-#   plot(mcp.ring, add = T, border = c("black","red","deepskyblue","limegreen","orange","blue")[i], lwd = 2)
-# }
+car::dataEllipse(x = pPC.env_units[top5.index, 1],
+                 y = pPC.env_units[top5.index, 2],
+                 groups = factor(reduced.list.unit_phyl_order$Mimicry.model[top5.index]),
+                 group.labels = "", ellipse.label = "",
+                 levels = 0.80, center.pch = F,
+                 center.cex = 1.5, draw=TRUE, plot.points = F, add = T,
+                 col = c("black","red","deepskyblue","limegreen","orange","blue"),
+                 lwd = 2, fill = FALSE, fill.alpha = 0.3, grid = F)
 
-text(pPCA_correl[,1:2]*4.2 + cbind(c(0, -0.8, 0.0, -0.4), c(-0.2, -0.2, -0.2, -0.4)), labels = row.names(pPCA_correl), font = 2, adj = c(0, 0))
+arrows(x0 = rep(0, nrow(pPCA_correl)), y0 = rep(0, nrow(pPCA_correl)), x1 = pPCA_correl[,1]*4.5, y1 =  pPCA_correl[,2]*4.5, length = 0.2, code = 2, lwd = 1.5)
 
-legend(legend = as.expression(bquote(bold("B"))), 
+text(pPCA_correl[,1:2]*4.7 + cbind(c(0, -0.9, 0.0, -0.6), c(-0.3, -0.3, -0.2, -0.4)),
+     labels = row.names(pPCA_correl),
+     cex = 1.2, font = 2, adj = c(0, 0))
+
+legend(legend = as.expression(bquote(bold("D"))),
        x = "topright", inset = c(0.05, 0.00), xjust = 0.5,
-       cex = 1.3, bty ="n")
+       cex = 1.9, bty ="n")
 
 par(mar = original_int_margins)
 
@@ -574,7 +588,17 @@ legend(x = "bottomright", pch = 16, cex = 1.3, legend = mimic.list_legend[1:2],
        bty = "n", inset = c(0.32, 0.00), # horiz = T, 
        col = c("black","red","deepskyblue","limegreen","orange","blue")[1:2])
 
-arrows(x0 = rep(0, nrow(pPCA_correl)), y0 = rep(0, nrow(pPCA_correl)), x1 = pPCA_correl[,1]*4.5, y1 =  pPCA_correl[,2]*4.5, length = 0.2, code = 2, lwd = 1)
+car::dataEllipse(x = pPC.env_units[top5.index, 1],
+                 y = pPC.env_units[top5.index, 2], 
+                 groups = factor(reduced.list.unit_phyl_order$Mimicry.model[top5.index]),
+                 group.labels = "", ellipse.label = "",
+                 levels = 0.80, center.pch = F, 
+                 center.cex = 1.5, draw=TRUE, plot.points = F, add = T, 
+                 col = c("black","red","deepskyblue","limegreen","orange","blue"),
+                 lwd = 2, fill = FALSE, fill.alpha = 0.3, grid = F) 
+
+arrows(x0 = rep(0, nrow(pPCA_correl)), y0 = rep(0, nrow(pPCA_correl)), x1 = pPCA_correl[,1]*4.5, y1 =  pPCA_correl[,2]*4.5, length = 0.2, code = 2, lwd = 1.5)
+
 
 # for (i in 1:length(mimic.list_legend)) 
 # {
@@ -632,7 +656,319 @@ par(oma = original_ext_margins, mar = original_int_margins, mfrow = c(1,1))
 dev.off()
 
 
-##### 10/ Bonus : permMANOVA on 2 Revell's pPC axis ####
+
+##### 10/ Plot Mantel tests and climatic space for perMANOVA and phyloMANOVA in the same plot #####
+
+### Load and prepare data
+
+# Data for Mantel regression plots
+load(file = "./outputs/Community_structure/Mantel_tests/Resultats_Mantel_Ist_clim_Spearman.RData")
+load(file = "./outputs/Community_structure/Mantel_tests/Resultats_Mantel_Ist_geo_Spearman.RData")
+load(file = "./outputs/Community_structure/Mantel_tests/Resultats_Mantel_partiel_Ist_Spearman.RData")
+
+load(file = "./outputs/Community_structure/Mantel_tests/Pairwise_values.RData")
+
+# Extract vectors of distances, without replicates and NA
+pairwise_Ist_vec <- as.dist(pairwise_Ist)[which(!is.na(as.dist(pairwise_Ist)))]
+pairwise_climdist_vec <- as.dist(pairwise_climdist)[which(!is.na(as.dist(pairwise_Ist)))]
+pairwise_geodist_vec <- as.dist(pairwise_geodist)[which(!is.na(as.dist(pairwise_Ist)))]
+
+# Extract only 1000 pairwise distances for the plot to make it readable
+set.seed(seed = 55644) # Ensure reproductibility
+sample_indices <- sample(x= seq_along(pairwise_Ist_vec), size = 1000, replace = F)
+save(sample_indices, file = "./outputs/Community_structure/Mantel_tests/sample_indices.RData")
+
+
+# Data for Climatic space for MANOVAs
+load(file = paste0("./outputs/Niche_evolution/reduced.list.unit_phyl_order.RData"))
+load(file = paste0("./outputs/Niche_evolution/permMANOVA/PCA.Revell.RData"))
+load(file = paste0("./outputs/Niche_evolution/permMANOVA/pPC.env_units.RData"))
+load(file = paste0("./outputs/Niche_evolution/permMANOVA/pPCA_correl.RData"))
+load(file = paste0("./outputs/Niche_evolution/permMANOVA/mimic_lists_for_pPCA_plot.RData"))
+load(file = paste0("./outputs/Niche_evolution/permMANOVA/top5.index.RData"))
+
+
+### Function to plot scatterplot of pairwise distances for Mantel tests
+plot_pairwise_distances <- function(title, cex_title = 1.3,
+                                    y, x, y_lab, x_lab,
+                                    y_lim = NULL,
+                                    cex_axis = 1.7, cex_lab = 1.8, cex_legend = 1.4,
+                                    rho_value, p_value, regression,
+                                    panel_letter = "", cex_panel_letter = 2.0)
+{
+  plot(x = x,y = y, 
+       ylim = y_lim,
+       main = title, ylab = y_lab, xlab = "",
+       cex.axis = cex_axis, cex.lab = cex_lab, cex.main = cex_title, lwd = 1, type = "n", axes = F)
+  title(xlab = x_lab, line = 3.2, cex.lab = cex_lab) 
+  
+  points(x = x, y = y, pch = 16, col = "#00000070")
+  
+  # Insert blank
+  legend(legend = c("             ",
+                    "             "),
+         x = "topleft", inset = c(0, 0.02), xjust = 1, y.intersp = 1.0, # Use inset to manually adjust position
+         cex = cex_legend, bty = "o", bg = "white", box.col = NA)
+  
+  # Insert rho value legend
+  legend(legend = bquote(bold(rho) ~ bold('=') ~ bold(.(rho_value))), text.font = 2,
+         x = "topleft", inset = c(-0.01, 0.02), xjust = 1, # Use inset to manually adjust position
+         cex = cex_legend, bty = "n", bg = "white", box.col = NA)
+  
+  # Insert p-value legend
+  legend(legend = c("",paste0("p = ",p_value)), text.font = 2,
+         x = "topleft", inset = c(-0.01, 0.02), xjust = 1, # Use inset to manually adjust position
+         cex = cex_legend, bty = "n", bg = "white", box.col = NA)
+  
+  axis(side = 1, lwd = 2, cex.axis = cex_axis)
+  axis(side = 2, lwd = 2, cex.axis = cex_axis)
+  abline(regression, lwd = 3, col = "red")
+  
+  # Blank for panel legend
+  legend(legend = "   ", text.font = 2,
+         x = "topright", inset = c(0.04, 0.03), xjust = 0.5,
+         cex = cex_panel_letter, bty ="o", bg = "white", box.col = NA)
+  # Add panel legend
+  legend(legend = panel_letter, text.font = 2,
+         x = "topright", inset = c(0.04, 0.03), xjust = 0.5,
+         cex = cex_panel_letter, bty ="n")
+
+}
+
+# Choose to plot ellipses or not
+with_ellipse <- T
+with_ellipse <- F
+
+ellipse <- ""
+if (with_ellipse) {ellipse <- "_with_ellipse"}
+
+pdf(file = paste0("./graphs/Niche_evolution/Mantels_&_permMANOVA",ellipse,".pdf"), height = 11.6, width = 12)
+
+original_ext_margins <- par()$oma
+original_int_margins <- par()$mar
+par(oma = c(0,0,0,0), mar = c(5.0, 5.0, 1.5, 2.0), mfrow = c(2,2))
+
+
+### Panel A = Ist ~ Dclim
+
+# Extract stats for legend
+rho_value <- format(round(Mantel_Spearman_Ist_clim$statistic, 3), nsmall = 3)
+p_value <- format(Mantel_Spearman_Ist_clim$signif, nsmall = 3)
+
+# Compute a linear regression to get coefficients to draw a predict line
+reg_clim <- lm(pairwise_Ist_vec ~ pairwise_climdist_vec)
+summary(reg_clim)
+
+plot_pairwise_distances(title = NULL, 
+                        y = pairwise_Ist_vec[sample_indices], x = pairwise_climdist_vec[sample_indices], 
+                        y_lab = bquote('Pairwise' ~I[ST]), x_lab = "Standardized climatic distance", 
+                        rho_value = rho_value, p_value = p_value, regression = reg_clim,
+                        panel_letter = "A")
+
+### Panel B = Ist ~ Dgeo
+
+# Extract stats for legend
+rho_value <- format(round(Mantel_Spearman_Ist_geo$statistic, 3), nsmall = 3)
+p_value <- format(Mantel_Spearman_Ist_geo$signif, nsmall = 3)
+
+# Compute a linear regression to get coefficients to draw a predict line
+reg_geo <- lm(pairwise_Ist_vec ~ pairwise_geodist_vec)
+summary(reg_geo)
+
+plot_pairwise_distances(title = NULL, 
+                        y = pairwise_Ist_vec[sample_indices], x = pairwise_geodist_vec[sample_indices], 
+                        y_lab = bquote('Pairwise' ~I[ST]), x_lab = "Geographic distance [km]", 
+                        rho_value = rho_value, p_value = p_value, regression = reg_geo,
+                        panel_letter = "B")
+
+### Panel C = Ist ~ Dclim + covar(Dgeo)
+
+# Extract stats for legend
+rho_value <- format(round(partial_Mantel_Spearman_Ist_clim_geo$statistic, 3), nsmall = 3)
+p_value <- format(partial_Mantel_Spearman_Ist_clim_geo$signif, nsmall = 3)
+
+# Compute linear regression of residuals from Ist ~ Dgeo on Dclim
+Ist_resid <- residuals(reg_geo, type = "response") # Extract residuals from LM on geographic distances
+reg_clim_geo <- lm(Ist_resid ~ pairwise_climdist_vec)
+summary(reg_clim_geo)
+
+
+plot_pairwise_distances(title = NULL, 
+                        y = Ist_resid[sample_indices], x = pairwise_climdist_vec[sample_indices], 
+                        y_lab = bquote('Residual Pairwise' ~I[ST]), x_lab = "Standardized climatic distance", 
+                        y_lim = c(-0.2, 0.5),
+                        rho_value = rho_value, p_value = p_value, regression = reg_clim_geo,
+                        panel_letter = "C")
+
+### Panel D = Climatic space for MANOVA tests
+
+# Add all grey points
+plot(pPC.env_units, col = "grey90", main = "", 
+     xlab = "", ylab = paste0("pPC2 (", round(PCvar[2]*100,1) ," %)"),
+     pch = 16, type = "p", axes = F, ylim = c(-6, 6), xlim = c(-6, 6),
+     cex.axis = 1.7, cex.lab = 1.8, cex.main = 1.3)
+title(xlab = paste0("pPC1 (", round(PCvar[1]*100,1) ," %)"), line = 3.2, cex.lab = 1.8) 
+
+axis(side = 1, lwd = 2, cex.axis = 1.7)
+axis(side = 2, lwd = 2, cex.axis = 1.7)
+
+# Add colored points
+points(pPC.env_units[top5.index,], pch = 16, col = c("black","red","deepskyblue","limegreen","orange","blue")[factor(reduced.list.unit_phyl_order$Mimicry.model[top5.index])])
+
+# Add mimicry ring legend
+legend(x = "bottomright", pch = 16, cex = 1.25, legend = mimic.list_legend[3:5], 
+       bty = "n", inset = c(0.02, 0.00), # horiz = T, 
+       col = c("black","red","deepskyblue","limegreen","orange","blue")[3:5])
+legend(x = "bottomright", pch = 16, cex = 1.25, legend = mimic.list_legend[1:2], 
+       bty = "n", inset = c(0.32, 0.00), # horiz = T, 
+       col = c("black","red","deepskyblue","limegreen","orange","blue")[1:2])
+
+# Add ellipses for 80% data
+if (with_ellipse) 
+{
+  car::dataEllipse(x = pPC.env_units[top5.index, 1],
+                   y = pPC.env_units[top5.index, 2], 
+                   groups = factor(reduced.list.unit_phyl_order$Mimicry.model[top5.index]),
+                   group.labels = "", ellipse.label = "",
+                   levels = 0.80, center.pch = F, 
+                   center.cex = 1.5, draw=TRUE, plot.points = F, add = T, 
+                   col = c("black","red","deepskyblue","limegreen","orange","blue"),
+                   lwd = 2, fill = FALSE, fill.alpha = 0.3, grid = F) 
+}
+
+# Add environmental variables arrows
+arrows(x0 = rep(0, nrow(pPCA_correl)), y0 = rep(0, nrow(pPCA_correl)), x1 = pPCA_correl[,1]*4.7, y1 =  pPCA_correl[,2]*4.7, length = 0.2, code = 2, lwd = 1.5)
+
+# Add text for environmental variables
+text(pPCA_correl[,1:2]*4.9 + cbind(c(0, -0.9, 0.0, -0.6), c(-0.3, -0.3, -0.2, -0.4)),
+     labels = row.names(pPCA_correl),
+     cex = 1.2, font = 2, adj = c(0, 0))
+
+# Add panel letter
+legend(legend = as.expression(bquote(bold("D"))), 
+       x = "topright", inset = c(0.04, 0.03), xjust = 0.5,
+       cex = 2, bty ="n")
+
+par(oma = original_ext_margins, mar = original_int_margins, mfrow = c(1,1))
+
+dev.off()
+
+
+
+##### 11/ Plot partial Mantel test and perMANOVA histogram together #####
+
+# Data for perMANOVA
+load(file = paste0("./outputs/Niche_evolution/permMANOVA/permMANOVA.4_plot_stuff.RData"))
+
+# Data for partial Mantel test
+load(file = "./outputs/Community_structure/Mantel_tests/Resultats_Mantel_partiel_Ist_Spearman.RData")
+
+### Function to plot histogram of null distribution of Spearman's rho during permutation test
+plot_histogram_Mantel_test <- function(test, title, cex_title = 1.3,
+                                       cex_axis = 1.5, cex_lab = 1.6, cex_legend = 1.4,
+                                       arrow_btm, arrow_top, arrow_adjust,
+                                       rho_value, p_value,
+                                       panel_letter = "", cex_panel_letter = 2.0)
+{
+  hist(c(test$perm, test$statistic),
+       breaks = 30, freq = TRUE, col = "gray", 
+       main = title, 
+       xlab = expression(paste("Spearman's ", rho)),
+       cex.axis = cex_axis, cex.lab = cex_lab, cex.main = cex_title, lwd = 2)
+  arrows(x0 = test$statistic + arrow_adjust, y0 = arrow_top, x1 = test$statistic + arrow_adjust, y1 = arrow_btm, length = 0.1, lwd = 3)
+  abline(v = mean(c(test$perm, test$statistic)), lty = 2, lwd = 2)
+  abline(v = quantile(c(test$perm, test$statistic), 0.95), lty = 2, lwd = 2, col = "red")
+  
+  # Insert quantiles legend
+  legend(legend = c(paste("Mean = 0.000"), 
+                    paste0("CI 95% = ", format(round(quantile(c(test$perm, test$statistic), 0.95),3), nsmall = 3))), 
+         x = "topright", inset = c(0.02, 0.20), y.intersp = 1.2, lty = 2 , lwd = 2, col = c("black", "red"), cex = cex_legend, bty ="n")
+  
+  # Insert rho value legend
+  legend(legend = bquote(bold(rho) ~ bold('obs =') ~ bold(.(rho_value))), text.font = 2,
+         x = "bottomright", inset = c(0.02, 0.41), xjust = 1, # Use inset to manually adjust position
+         cex = cex_legend, bty = "n", bg = "white", box.col = NA)
+  
+  # Insert p-value legend
+  legend(legend = c(paste0("p = ",p_value)), text.font = 2,
+         x = "bottomright", inset = c(0.02, 0.35), xjust = 1, # Use inset to manually adjust position
+         cex = cex_legend, bty = "n", bg = "white", box.col = NA)
+  
+  # Add panel legend
+  legend(legend = panel_letter, text.font = 2,
+         x = "topright", inset = c(0.03, 0.00), xjust = 0.5,
+         cex = cex_panel_letter, bty ="n")
+  
+}
+
+
+
+# Plot
+
+pdf(file = "./graphs/Niche_evolution/partialMantel_&_permMANOVA_both_histo.pdf", height = 7, width = 14)
+
+original_ext_margins <- par()$oma
+original_int_margins <- par()$mar
+par(oma = c(0,0,0,0), mar = c(4.5,5,1.5,1), mfrow = c(1,2))
+
+### Panel A: Histogram for partial Mantel test for Pariwise Ist ~ Dclim + cov(Dgeo)
+
+# Extract stats for legend
+rho_value <- format(round(partial_Mantel_Spearman_Ist_clim_geo$statistic, 3), nsmall = 3)
+p_value <- format(partial_Mantel_Spearman_Ist_clim_geo$signif, nsmall = 3)
+
+plot_histogram_Mantel_test(test = partial_Mantel_Spearman_Ist_clim_geo,
+                           title = "",
+                           cex_axis = 1.7, cex_lab = 1.8, cex_legend = 1.6,
+                           arrow_btm = 5, arrow_top = 70, arrow_adjust = 0.000,
+                           rho_value = rho_value, p_value = p_value,
+                           panel_letter = "A", cex_panel_letter = 2.0)
+
+
+### Panel B: Histogram for perMANOVA test
+
+hist(x = log(c(pseudo_F_obs, pseudo_F_null)), 
+     breaks = 20,
+     freq = TRUE, col = "gray",
+     # xlim = c(0, 20),
+     # ylim = c(0, 400),
+     main = "",
+     xlab = "pseudo-F (log scale)",
+     axes = F,
+     cex.axis = 1.7, cex.lab = 1.8, cex.main = 1.2, lwd = 2)
+
+axis(side = 1, lwd = 2, cex.axis = 1.7, labels = c(0, 1, 3, 8, 20), at = seq(-1,3,1))
+axis(side = 2, lwd = 2, cex.axis = 1.7)
+
+arrows(log(pseudo_F_obs) - 0.065, 120, log(pseudo_F_obs) - 0.065, 10, length = 0.1, lwd = 3)  # Draw arrow above mean BC obs
+abline(v = log(mean(c(pseudo_F_null, pseudo_F_obs))), lwd = 2, lty = 2) # Add vertical line for mean value
+abline(v = log(quantile(c(pseudo_F_null, pseudo_F_obs), 0.95)), lwd = 2, lty = 2, col = "red") # Add vertical line for 95% value
+
+legend(legend = c(paste0("Mean = ", format(round(mean(c(pseudo_F_null, pseudo_F_obs)),2), nsmall = 2)), 
+                  paste0("CI 95% = ", round(quantile(c(pseudo_F_null, pseudo_F_obs), 0.95), 2))), 
+       x = "topright", inset = c(0.02, 0.20), 
+       lty = 2 , lwd = 2, col = c("black", "red"), cex = 1.6, bty = "n")
+
+legend(legend = as.expression(bquote(bold("pseudo-F obs = 19.35"))),
+       x = "bottomright", inset = c(0.03, 0.41),
+       cex = 1.6, bty ="n", xjust = 1)
+
+legend(legend = as.expression(bquote(bold("p = 0.001"))),
+       x = "bottomright", inset = c(0.02, 0.35),
+       cex = 1.6, bty ="n", xjust = 1)
+
+
+legend(legend = as.expression(bquote(bold("B"))), 
+       x = "topright", inset = c(0.03, 0.00), xjust = 0.5,
+       cex = 2.0, bty ="n")
+
+par(oma = original_ext_margins, mar = original_int_margins, mfrow = c(1,1))
+
+dev.off()
+
+
+
+##### 12/ Bonus : permMANOVA on 2 Revell's pPC axis ####
 
 # Load Revell's pPCA axis for units/OMUs
 load(file = paste0("./outputs/Niche_evolution/permMANOVA/pPC.env_units.RData"))

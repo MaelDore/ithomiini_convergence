@@ -1,4 +1,4 @@
-##### Community structure with Bray-Curtis indices on comimetic pairs of OMUs #####
+##### Script 02: Community structure with Bray-Curtis indices on comimetic pairs of OMUs #####
 
 # Compute BC indices for all OMUs
 # Compute mean BC for mimics only and non-mimics only
@@ -519,3 +519,213 @@ par(oma = original_ext_margins, mar = original_int_margins, mfrow = c(1,1))
 
 dev.off()
 
+
+##### 7/ Illustration of BC overlap between OMU #####
+
+# Select the OMU to illustrate
+
+load(file = paste0("./input_data/Summary_tables/list.unit.RData"))
+
+unit_BC_dist <- readRDS(file = "./outputs/Community_Structure/unit_BC_dist.rds")
+unit_BC_dist_mat <- as.matrix(unit_BC_dist)
+
+table(unit_BC_dist_mat[which(list.unit$Tag.model == "Dircenna.dero.DILUCIDA"), ])
+table(unit_BC_dist_mat[which(list.unit$Tag.model == "Dircenna.jemina.DILUCIDA"), ])
+
+list.unit$Tag.model[which((unit_BC_dist_mat[60, ] > 0.93) & (unit_BC_dist_mat[60, ] < 0.97) & (list.unit$initial_model_type == "complete"))]
+
+which(list.unit$Tag.model == "Dircenna.jemina.DILUCIDA")
+which(list.unit$Tag.model == "Dircenna.dero.DILUCIDA")
+which(list.unit$Tag.model == "Oleria.amalda.LERIDA")
+which(list.unit$Tag.model == "Mechanitis.mazaeus.MAELUS")
+
+unit_BC_dist_mat[60, 58]
+unit_BC_dist_mat[60, 499]
+unit_BC_dist_mat[60, 372]
+
+# Load OMU/unit probability stack 
+OMU_proba_stack <- readRDS(file = paste0("./input_data/SDM_stacks/All_OMU_stack_Jaccard.80.rds"))
+
+# Load packages
+library(raster)
+library(rgdal)
+
+# Load stuff for maps
+pal_bl_red_Mannion <- readRDS(file = "./input_data/Map_stuff/pal_bl_red_Mannion.rds")
+
+grid_Mollweide_out <- readRDS(file = "./input_data/Map_stuff/grid_Mollweide_out.rds")
+large_bg_mask_Mollweide <- readRDS(file = "./input_data/Map_stuff/large_bg_mask_Mollweide.rds")
+bbox_sp_Mollweide <- readRDS(file = "./input_data/Map_stuff/bbox_sp_Mollweide.rds")
+country_borders_Mollweide <- readRDS(file = "./input_data/Map_stuff/country_borders_Mollweide.rds")
+
+# Function to project raster into Mollweide
+Mollweide_projection <- function(x) # Raster to project
+{
+  new_map <- projectRaster(from = x, 
+                           method = "bilinear", # Method for interpolation => "ngb" = nearest neighbor for qualitative (or discrete) variables . "bilinear" = for quantitative variables
+                           crs = "+proj=moll +lon_0=-75 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=km +no_defs", # If you have the CRS arguments
+                           alignOnly = F)
+  return(new_map)
+}
+
+# Function to retrieve type of model and parse name
+extract_OMU_name_and_pattern <- function(unit)
+{
+  load(file = "./input_data/list.models.RData")
+  load(file = "./input_data/list.rings.RData")
+  
+  ID <- which(list.models$Tag.model == unit)
+  species_name <- paste(list.models$Genus_new[ID], list.models$Species_new[ID])
+  
+  # Update pattern name
+  pattern <- as.character(list.models$Mimicry.model[ID])
+  pattern <- list.rings$Mimicry_new[which(list.rings$Mimicry == pattern)]
+  pattern <- paste0("(", pattern, ")")
+
+  return(c(species_name, pattern))
+}
+
+
+# Function to plot a unit map
+{
+  map_unit_Mollweide <- function(x,                                       # Raster to map
+                                 unit_pts,                                # Shp with data points of ocurrences
+                                 color_palette = pal_bl_red_Mannion,   # Color palette
+                                 main_title,                           # Main title
+                                 main_title_cex = 1.5,                 # Main title size
+                                 
+                                 xlim = c(-4600, 4600),    # Limit of plot on x-axis (Longitude)
+                                 ylim = c(-4450, 3400),    # Limit of plot on y-axis (Latitude)
+                                 axis_cex = 1.4,           # Axes size
+                                 
+                                 xlab = "",                # X-axis label
+                                 ylab = "",                # Y-axis label
+                                 x_axis_breaks = c(-3930, -2170, -420, 1500, 3050),            # X-axis tick breaks
+                                 y_axis_breaks = c(-3650, -2450, -1220, 0, 1230, 2445),        # Y-axis tick breaks
+                                 x_axis_labels = c("120°E", "100°E", "80°E", "60°E", "40°E"),      # X-axis tick labels
+                                 y_axis_labels = c("30°S", "20°S", "10°S", "0°", "10°N", "20°N"),  # Y-axis tick labels
+                                 
+                                 occ_cex = 0.5,         # Size of occurrences
+                                 occ_col = "#00000080",  # Color of occurrences
+                                 
+                                 legend_title,             # Legend title
+                                 legend_title_cex = 1.4,   # Legend title size
+                                 legend_title_x = -3550,   # Legend title x position
+                                 legend_title_y = 430,     # Legend title y position
+                                 legend_cex = 1.4,         # Legend size
+                                 legend_breaks,            # Legend tick positions
+                                 legend_location = c(-4100, -3800, -3950, 0),  # Legend position
+                                 
+                                 scale_bar_position = c(-2600, -4000),  # Scale bar position
+                                 
+                                 arrow_scale = 0.45,           # North arrow size
+                                 arrow_padin = c(0.15, 0.15),  # North arrow position adjustement
+                                 
+                                 facet_letter = "",                  # Small case letter for facet
+                                 facet_letter_col = "black",         # Color of case letter for facet
+                                 facet_letter_cex = 2.2,             # Size of small case letter for facet
+                                 facet_letter_inset = c(0, -0.008))  # Position adjustment of small case letter for facet
+  
+  {
+    # Plot raster background without axis
+    image(x, col = color_palette,
+          xlim = xlim, ylim = ylim, axes = F,
+          xlab = xlab, ylab = ylab)
+    title(main = main_title, cex.main = main_title_cex, line = 1.3)
+    
+    # Generate axes with manual positioning of ticks
+    axis(side = 1, at = x_axis_breaks, labels = x_axis_labels, cex.axis = axis_cex, lwd = 0.2, lwd.ticks = 1, gap.axis = 0, padj = 0.5)
+    axis(side = 2, at = y_axis_breaks, labels = y_axis_labels, cex.axis = axis_cex, lwd = 0.2, lwd.ticks = 1, gap.axis = 0)
+    
+    # Add background, borders and graticules
+    plot(large_bg_mask_Mollweide, lwd = 1, border = "grey20", col = "aliceblue", add = T)
+    plot(grid_Mollweide_out, lty = 92, col = "grey80", add = T)
+    plot(bbox_sp_Mollweide, lwd = 2, border = "black", col = NA, add = T)
+    plot(country_borders_Mollweide, lwd = 1, border = "#00000030", col = NA, add = T)
+    
+    # Add occurrence data
+    plot(unit_pts, add = TRUE, col = occ_col, pch = 16, cex = occ_cex)
+    
+    # Add occurrence legend
+    legend(legend = NA, pch = 16, cex = 1, x = -2700, y = -2600, bty = "n")
+    text(labels = "Occurrences", cex = 1.15, x = -1200, y = -2945, bty = "n", font = 2)
+    
+    
+    # Add scale bar in legend
+    scalebar(d = 2000, type = "line", lwd = 4, divs = 4, xy = scale_bar_position, label = c("", "2000 km", ""), adj = c(0.5, -0.8), font = 2, cex = 1.2)
+    prettymapr::addnortharrow(pos = "bottomright", scale = arrow_scale, padin = arrow_padin, text.col = "#00000000")
+    rangeBuilder::addRasterLegend(x, locs = legend_breaks, cex.axis = legend_cex, ramp = color_palette, ncolors = 200, border = T, location = legend_location)
+    rangeBuilder::addRasterLegend(x, locs = legend_breaks, cex.axis = legend_cex, ramp = color_palette, ncolors = 200, border = T, location = legend_location)
+    graphics::text(x = legend_title_x, y = legend_title_y, font = 2, cex = legend_title_cex, label = legend_title)
+    
+    # Add facet letter
+    legend(legend = facet_letter, x = "bottomright", bty = "n", text.col = facet_letter_col,
+           text.font = 2, cex = facet_letter_cex, inset = facet_letter_inset)
+    
+  }
+}
+
+pdf(file = paste0("./maps/Community_Structure/BC_illustration.pdf"), height = 10, width = 10)
+
+par(mfrow = c(2,2))
+original_int_margins <- par()$mar
+par(mar = c(3, 3, 3, 1)) # b l t r
+
+OMU_names <- c("Dircenna.jemina.DILUCIDA", "Dircenna.dero.DILUCIDA", "Oleria.amalda.LERIDA", "Mechanitis.mazaeus.MAELUS")
+BC_list <- c("", "0.35", "0.75", "0.95")
+
+for (i in seq_along(OMU_names))
+{
+  # i <- 1
+  
+  unit <- OMU_names[i]
+  
+  # Load unit occurrence points
+  load(paste0("./input_data/Species_data/occurrences_", unit,".RData")) # Load Spatial object with occurrences
+  Mollweide_shp_projection(unit.points)
+  
+  # Retrieve type of model and parse name
+  unit_spec <- extract_OMU_name_and_pattern(unit)
+  unit_title <- bquote(bolditalic(.(unit_spec[1]))~bold(.(unit_spec[2])))
+  
+  # Adjust map projection and range
+  map <- Mollweide_projection(OMU_proba_stack[[unit]])
+  map@data@max <- 1
+  
+  # Map the OMU habitat suitability
+  map_unit_Mollweide(x = map,
+                     unit_pts = unit.points_Mollweide,
+                     color_palette = c("#EDEDED", tmaptools::get_brewer_pal("RdYlGn", n = 199, plot = F)),
+                     main_title = unit_title,
+                     scale_bar_position = c(-2400, -4000),
+                     legend_breaks = seq(0, 1, 0.2),
+                     legend_title = "Habitat\n   suitability",
+                     legend_title_x = -3400,
+                     legend_title_y = 850)
+  
+  BC_value <- BC_list[i]
+  
+  if (i > 1)
+  {
+    legend(x = 1750, y = 3130, legend = "              ", cex = 1.4, bg = "white", box.lwd = 2, box.col = "grey40")
+    legend(x = 1125, y = 3200, legend = bquote(bold('BC ='~.(BC_value))), cex = 1.6, bty = "n")
+    
+  }
+  
+}
+
+par(mar = original_int_margins)
+par(mfrow = c(1,1))
+
+dev.off()
+
+
+# Panel A: "Dircenna.jemina.DILUCIDA"
+OMU_proba_stack[["Dircenna.jemina.DILUCIDA"]]
+
+
+# Panel B: "Dircenna.dero.DILUCIDA" ; BC = 0.35
+
+# Panel C: "Oleria.amalda.LERIDA" ; BC = 0.75
+
+# Panel D: "Mechanitis.mazaeus.MAELUS" ; BC = 0.95

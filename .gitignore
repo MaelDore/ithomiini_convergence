@@ -2,3 +2,21 @@
 .Rhistory
 .RData
 .Ruserdata
+
+# Ignore some folders
+renv/*
+sensitive_data/*
+packages/*
+
+# Special folder for data that cannot be disclosed publically
+sensitive_data/*
+
+# Ignore certain types of files
+*.tif
+*.tiff
+*.jpg
+*.jpeg
+*.zip
+*.psd
+*.ai
+*.lnk

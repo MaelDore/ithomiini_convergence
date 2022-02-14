@@ -1,4 +1,4 @@
-##### Phylogenetic signals #####
+##### Script 05: Phylogenetic signals #####
 
 # Test for phylogenetic signal in the evolution of mimicry patterns AND climatic niche
 

@@ -94,11 +94,15 @@ sum(table(list.unit$Mimicry.model)>=10) # 23 circles instead of 44
 big.rings <- names(table(list.unit$Mimicry.model))[table(list.unit$Mimicry.model)>=10] 
 
 # Reduce dataset to keep only OMU from big mimicry rings (N >= 10)
-reduced.list.unit_phyl_order <- list.unit[list.unit$Mimicry.model %in% big.rings,] 
+reduced.list.unit_phyl_order <- list.unit[list.unit$Mimicry.model %in% big.rings, ] 
 nrow(reduced.list.unit_phyl_order) # 619 units instead of 719
 save(reduced.list.unit_phyl_order, file = paste0("./outputs/Niche_evolution/reduced.list.unit_phyl_order.RData"))
 
 load(file = paste0("./outputs/Niche_evolution/reduced.list.unit_phyl_order.RData"))
+
+# Reduce species list to the slected mimicry rings
+reduced.list.sp <- list.sp[list.sp$Sp_full %in% reduced.list.unit_phyl_order$Sp_full, ]
+nrow(reduced.list.sp)
 
 # Remove OMUs tips not in the list of big rings
 ?drop.tip

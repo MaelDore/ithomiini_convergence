@@ -1,3 +1,10 @@
+
+###################################
+#      Author: MaÃ«l DorÃ©          #
+#  Contact: mael.dore@gmail.com   #
+###################################
+
+
 ### Preparation ####
 
 # Effacer l'environnement
@@ -55,36 +62,36 @@ library(vegan)
 
 ?mantel.correlog()
 
-mantel.correlog(D.eco, # Matrice des distances écologiques (Jaccard de motifs, Distance niches climatiques)
-                D.geo, # Matrice des distances géographiques (ou phylogénétiques)
-                XY, # Coordonnées cartésiennes pour calcul automatique de distances géographiques euclidiennes
-                n.class, # Nombre de classes de distances. Struges equation par défaut
-                break.pts, # Vecteur pour définir manuellement les limites de classes de distances
+mantel.correlog(D.eco, # Matrice des distances ?cologiques (Jaccard de motifs, Distance niches climatiques)
+                D.geo, # Matrice des distances g?ographiques (ou phylog?n?tiques)
+                XY, # Coordonn?es cart?siennes pour calcul automatique de distances g?ographiques euclidiennes
+                n.class, # Nombre de classes de distances. Struges equation par d?faut
+                break.pts, # Vecteur pour d?finir manuellement les limites de classes de distances
                 cutoff, # ???
                 r.type = c("pearson","spearman","kendall"), # Choix de la stats de test pour les Mantel test
-                nperm, # Nb de permutations pour les tests. 999 par défaut
-                mult = c("holm","hochberg","bonferroni", ...), # Methode d'ajustement des p-value pour tests multiples. Voir ?p.adjust. Holm par défaut
+                nperm, # Nb de permutations pour les tests. 999 par d?faut
+                mult = c("holm","hochberg","bonferroni", ...), # Methode d'ajustement des p-value pour tests multiples. Voir ?p.adjust. Holm par d?faut
                 progressive = T/F, # Pour une correction progressive des p-value. Test of the first distance class: no correction; second distance class: correct for 2 simultaneous tests; distance class k: correct for k simultaneous tests. 
-                # Valable surtout si on veut mettre en évidence l'autocorrelation dans les premières classes. Sinon, si on veut comparer toutes les classes de distances sur un pied d'égalité, ne pas utiliser.
-                alpha # Niveau de significativité choisi pour discriminer les symboles sur plot
+                # Valable surtout si on veut mettre en ?vidence l'autocorrelation dans les premi?res classes. Sinon, si on veut comparer toutes les classes de distances sur un pied d'?galit?, ne pas utiliser.
+                alpha # Niveau de significativit? choisi pour discriminer les symboles sur plot
 )
 
 ### Dclim ~ Dphylo
 
-Mantel_correlog_Dclim <- mantel.correlog(D.eco = Revell_Pairwise_climdist, # Matrice des distances écologiques (Jaccard de motifs, Distance niches climatiques)
-                D.geo = phylo.dist.mat, # Matrice des distances géographiques (ou phylogénétiques)
-                n.class = 0, # Nombre de classes de distances. Struges equation par défaut
-                break.pts = # Vecteur pour définir manuellement les limites de classes de distances
+Mantel_correlog_Dclim <- mantel.correlog(D.eco = Revell_Pairwise_climdist, # Matrice des distances ?cologiques (Jaccard de motifs, Distance niches climatiques)
+                D.geo = phylo.dist.mat, # Matrice des distances g?ographiques (ou phylog?n?tiques)
+                n.class = 0, # Nombre de classes de distances. Struges equation par d?faut
+                break.pts = # Vecteur pour d?finir manuellement les limites de classes de distances
                 # seq(from=0, to = 55, by = 5), 
                  seq(from=0, to = 30, by = 2),
                 # NULL,
-                cutoff = F, # Si T : limite les classes de distances dès que tous les points ont au moins été inclus une fois (i.e., distance maximale parmi les distances minimales des sites/espèces).
-                            # En contexte de Dphylo : 2xlongueur de la branche terminale de l'espèce la plus "originiale"
+                cutoff = F, # Si T : limite les classes de distances d?s que tous les points ont au moins ?t? inclus une fois (i.e., distance maximale parmi les distances minimales des sites/esp?ces).
+                            # En contexte de Dphylo : 2xlongueur de la branche terminale de l'esp?ce la plus "originiale"
                 r.type = "pearson", # Choix de la stats de test pour les Mantel test
-                nperm = 999, # Nb de permutations pour les tests. 999 par défaut
-                mult = "holm", # Methode d'ajustement des p-value pour tests multiples. Voir ?p.adjust. Holm par défaut
+                nperm = 999, # Nb de permutations pour les tests. 999 par d?faut
+                mult = "holm", # Methode d'ajustement des p-value pour tests multiples. Voir ?p.adjust. Holm par d?faut
                 progressive = F, # Pour une correction progressive des p-value. Test of the first distance class: no correction; second distance class: correct for 2 simultaneous tests; distance class k: correct for k simultaneous tests. 
-                # Valable surtout si on veut mettre en évidence l'autocorrelation dans les premières classes. Sinon, si on veut comparer toutes les classes de distances sur un pied d'égalité, ne pas utiliser.
+                # Valable surtout si on veut mettre en ?vidence l'autocorrelation dans les premi?res classes. Sinon, si on veut comparer toutes les classes de distances sur un pied d'?galit?, ne pas utiliser.
                 )
 # Warning if the last break.pts is not higher than max.dist (i.e., some pairs are not evaluated, no included inthe last distance class)
 
@@ -97,7 +104,7 @@ Mantel_correlog_Dclim <- mantel.correlog(D.eco = Revell_Pairwise_climdist, # Mat
 Mantel_correlog_Dclim
 str(Mantel_correlog_Dclim)
 
-plot(Mantel_correlog_Dclim, alpha = 0.05)  # Niveau de significativité choisi pour discriminer les symboles sur plot
+plot(Mantel_correlog_Dclim, alpha = 0.05)  # Niveau de significativit? choisi pour discriminer les symboles sur plot
 
 # Export
 
@@ -113,20 +120,20 @@ dev.off()
 
 ### Dmim ~ Dphylo
 
-Mantel_correlog_Dmim <- mantel.correlog(D.eco = mimicry.similarity.weights, # Matrice des distances écologiques (Jaccard de motifs, Distance niches climatiques)
-                                         D.geo = phylo.dist.mat, # Matrice des distances géographiques (ou phylogénétiques)
-                                         n.class = 0, # Nombre de classes de distances. Struges equation par défaut
-                                         break.pts = # Vecteur pour définir manuellement les limites de classes de distances
+Mantel_correlog_Dmim <- mantel.correlog(D.eco = mimicry.similarity.weights, # Matrice des distances ?cologiques (Jaccard de motifs, Distance niches climatiques)
+                                         D.geo = phylo.dist.mat, # Matrice des distances g?ographiques (ou phylog?n?tiques)
+                                         n.class = 0, # Nombre de classes de distances. Struges equation par d?faut
+                                         break.pts = # Vecteur pour d?finir manuellement les limites de classes de distances
                                            seq(from=0, to = 55, by = 5), 
                                          #  seq(from=0, to = 30, by = 2),
                                          # NULL,
-                                         cutoff = F, # Si T : limite les classes de distances dès que tous les points ont au moins été inclus une fois (i.e., distance maximale parmi les distances minimales des sites/espèces).
-                                         # En contexte de Dphylo : 2xlongueur de la branche terminale de l'espèce la plus "originiale"
+                                         cutoff = F, # Si T : limite les classes de distances d?s que tous les points ont au moins ?t? inclus une fois (i.e., distance maximale parmi les distances minimales des sites/esp?ces).
+                                         # En contexte de Dphylo : 2xlongueur de la branche terminale de l'esp?ce la plus "originiale"
                                          r.type = "spearman", # Choix de la stats de test pour les Mantel test
-                                         nperm = 999, # Nb de permutations pour les tests. 999 par défaut
-                                         mult = "holm", # Methode d'ajustement des p-value pour tests multiples. Voir ?p.adjust. Holm par défaut
+                                         nperm = 999, # Nb de permutations pour les tests. 999 par d?faut
+                                         mult = "holm", # Methode d'ajustement des p-value pour tests multiples. Voir ?p.adjust. Holm par d?faut
                                          progressive = F, # Pour une correction progressive des p-value. Test of the first distance class: no correction; second distance class: correct for 2 simultaneous tests; distance class k: correct for k simultaneous tests. 
-                                         # Valable surtout si on veut mettre en évidence l'autocorrelation dans les premières classes. Sinon, si on veut comparer toutes les classes de distances sur un pied d'égalité, ne pas utiliser.
+                                         # Valable surtout si on veut mettre en ?vidence l'autocorrelation dans les premi?res classes. Sinon, si on veut comparer toutes les classes de distances sur un pied d'?galit?, ne pas utiliser.
 )
 # Warning if the last break.pts is not higher than max.dist (i.e., some pairs are not evaluated, no included inthe last distance class)
 
@@ -139,7 +146,7 @@ Mantel_correlog_Dmim <- mantel.correlog(D.eco = mimicry.similarity.weights, # Ma
 Mantel_correlog_Dmim
 str(Mantel_correlog_Dmim)
 
-plot(Mantel_correlog_Dmim, alpha = 0.05) # Niveau de significativité choisi pour discriminer les symboles sur plot
+plot(Mantel_correlog_Dmim, alpha = 0.05) # Niveau de significativit? choisi pour discriminer les symboles sur plot
 
 
 # Export

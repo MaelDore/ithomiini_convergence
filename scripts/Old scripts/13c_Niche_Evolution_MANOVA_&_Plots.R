@@ -1,5 +1,10 @@
 ##### Niche Evolution : MANOVA tests et plots des esp?ces/units dans l'espace climatique #####
 
+###################################
+#      Author: Maël Doré          #
+#  Contact: mael.dore@gmail.com   #
+###################################
+
 ### Preparation ###
 
 # Effacer l'environnement

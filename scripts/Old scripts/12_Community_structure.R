@@ -1,5 +1,10 @@
 ##### Community composition analysis #####
 
+###################################
+#      Author: MaÃ«l DorÃ©          #
+#  Contact: mael.dore@gmail.com   #
+###################################
+
 ### Preparation ###
 
 # Effacer l'environnement
@@ -25,7 +30,7 @@ load(file = paste0(internal.wd,"/Com.ring.richness.stack.RData"))
 # Load the species proba. stack
 load(file = paste0(internal.wd,"/Com.sp.stack.RData"))
 
-# Chargement d'un stack pour les Néotropiques à la résolution des Final Maps
+# Chargement d'un stack pour les N?otropiques ? la r?solution des Final Maps
 load(file = paste0(internal.wd,"/envCom.RData"))
 
 # Color palet for plot
@@ -44,9 +49,9 @@ save(unique.df.ring.richness.stack, file = paste0(internal.wd,"/Unique.df.com.ri
 
 # Fonction pour calculer l'indice de simpson car vegan fait de la merde !!!
 simpson <- function (x, na.rm) {
-  if (any(is.na(x))) { # Cas avec une valeur à NA
+  if (any(is.na(x))) { # Cas avec une valeur ? NA
     y <- NA
-  }else{ # Cas avec toutes valeurs renseignées
+  }else{ # Cas avec toutes valeurs renseign?es
     y <- x/sum(x)
     y <- 1-(sum(y*y))
   }
@@ -75,7 +80,7 @@ dev.off()
 # Mean community diversity = Ds
 Global_Ds <- mean(Dk@data@values, na.rm = T)
 
-# Total diversity index = Dt  => à recalculer sur la somme des communautés échantillonnées en cas de sub-sampling
+# Total diversity index = Dt  => ? recalculer sur la somme des communaut?s ?chantillonn?es en cas de sub-sampling
 mimicry.abundances <- NA # To store each mimicry global expected richness
 for (i in 1:nlayers(ring.richness.stack)) {
   mimicry.abundances[i] <- sum(ring.richness.stack[[i]]@data@values, na.rm = T)
@@ -169,17 +174,17 @@ for (k in 1:1000) {
   modeled.shuffle.list.unit <- shuffle.list.unit[which(Models_Resume_table$Models_select_0.5 >= 5),]
   occ.shuffle.list.unit <- shuffle.list.unit[-(which(Models_Resume_table$Models_select_0.5 >= 5)),]
   
-  # Fonction pour calculer les probabilités à plus grande échelle
-  aggreg_prob = function(x, na.rm) { # Déclaration des arguments en input
-    y <- 1-prod(1-x) # Définition du calcul interne
+  # Fonction pour calculer les probabilit?s ? plus grande ?chelle
+  aggreg_prob = function(x, na.rm) { # D?claration des arguments en input
+    y <- 1-prod(1-x) # D?finition du calcul interne
     return(y) # Output
   }
   
   # i <- 1
-  simul.ring.richness.stack <- stack(envCom[[1]]) # 1e couche du stack final à supprimer par la suite
+  simul.ring.richness.stack <- stack(envCom[[1]]) # 1e couche du stack final ? supprimer par la suite
   for (i in 1:length(mimicry.list)) { # Par mimicry ring
     
-    ring.stack <- stack(envCom[[1]]) # 1e couche du stack temporaire des units à supprimer par la suite
+    ring.stack <- stack(envCom[[1]]) # 1e couche du stack temporaire des units ? supprimer par la suite
     
     ring <- as.character(mimicry.list[i]) # Charge le nom de sp
     
@@ -222,14 +227,14 @@ for (k in 1:1000) {
   # Dk <- calc(ring.richness.stack, fun = vegan::diversity, index = "simpson", MARGIN = 1)*1
   simul.Dk <- calc(simul.ring.richness.stack, fun = simpson, na.rm = T)*1
   # Plot Simulated Simpson's Mimicry Diversity Map
-  plot(simul.Dk, col = pal_bl_red, main = paste0("Simulated Simpson's Mimicry Diversity Map n°", k))
+  plot(simul.Dk, col = pal_bl_red, main = paste0("Simulated Simpson's Mimicry Diversity Map n?", k))
   
   ## Compute index for all communities
   
   # Mean community diversity = Ds
   Simul_global_Ds <- mean(simul.Dk@data@values, na.rm = T)
   
-  # Total diversity index = Dt  => à recalculer sur la somme des communautés échantillonnées en cas de sub-sampling
+  # Total diversity index = Dt  => ? recalculer sur la somme des communaut?s ?chantillonn?es en cas de sub-sampling
   mimicry.abundances <- NA # To store each mimicry global expected richness
   for (i in 1:nlayers(simul.ring.richness.stack)) {
     mimicry.abundances[i] <- sum(simul.ring.richness.stack[[i]]@data@values, na.rm = T)
@@ -247,7 +252,7 @@ for (k in 1:1000) {
   
   # Subsampling ?
   
-  cat(paste0(Sys.time(), " - Simul n°", k,"\n"))
+  cat(paste0(Sys.time(), " - Simul n?", k,"\n"))
 }
 
 summary(Ist_null)
@@ -308,13 +313,13 @@ Ist <- c(Ist_obs, Ist_null)
 Distri <- as.factor(c(rep("Obs",length(Ist_obs)),rep("Null",length(Ist_null))))
 Ist.df <- data.frame(Ist, Distri)
 
-## Hypothèses T-test impossible. On passe en non-paramétrique
-# Hypothèse de normalité
+## Hypoth?ses T-test impossible. On passe en non-param?trique
+# Hypoth?se de normalit?
 shapiro.test(Ist_obs)
 shapiro.test(Ist_null)
-# Hypothèse d'homoscédascticité
+# Hypoth?se d'homosc?dascticit?
 var.test(Ist_obs,Ist_null,alt="two.sided") 
-##  T-test impossible. On passe en non-paramétrique.
+##  T-test impossible. On passe en non-param?trique.
 
 # Wilcox test
 Ist_test <- wilcox.test(Ist_obs, Ist_null, alt = "greater", paired = F) ; Ist_test
@@ -327,7 +332,7 @@ legend(legend = c("W = 840020","p-value < 0.001"), x = "bottomright", cex = 1, b
 dev.off()
 
 
-##### Approche par Bray-Curtis sur les paires d'units co-mimétiques
+##### Approche par Bray-Curtis sur les paires d'units co-mim?tiques
 
 ### Load directly the unit probability stack
 load(file = paste0(internal.wd,"/Com.unit.stack.RData"))
@@ -364,7 +369,7 @@ load(file = paste0(internal.wd,"/filtered.unit.mat.RData"))
 # Compute Bray-Curtis index for all pairs of units
 library(vegan)
 
-unit.BC.dist <- vegdist(x = t(com.unit.mat.783), method = "bray") # Calcul de dissimilarités entre lignes
+unit.BC.dist <- vegdist(x = t(com.unit.mat.783), method = "bray") # Calcul de dissimilarit?s entre lignes
 
 save(unit.BC.dist, file = paste0(internal.wd,"/Community_Structure/unit.BC.dist.RData"))
 
@@ -379,7 +384,7 @@ unit.BC.dist.mat <- as.matrix(unit.BC.dist)
 mimicry.list <- as.character(unique(list.models$Mimicry.model))
 
 mean_BC <- NA
-for (i in 1:length(mimicry.list)) { # Par cercles mimétiques
+for (i in 1:length(mimicry.list)) { # Par cercles mim?tiques
   mimic <- mimicry.list[i]
   for (j in 1:nrow(list.models)) { # Recherche de l'index des units
     tags <- as.character(list.models$Tag.model[list.models$Mimicry.model == mimic])
@@ -392,7 +397,7 @@ for (i in 1:length(mimicry.list)) { # Par cercles mimétiques
     save(BC, file = paste0(internal.wd,"/Community_Structure/BC.",mimic,".RData"))
     mean_BC[i] <- NA
   }else{ # Cas normal avec au moins 2 units.
-    mat.index <- combn(x = index, m = 2, FUN = c) # Récupération de toutes les combinaisons de paires de units possibles
+    mat.index <- combn(x = index, m = 2, FUN = c) # R?cup?ration de toutes les combinaisons de paires de units possibles
     save(mat.index, file = paste0(internal.wd,"/Community_Structure/mat.index.",mimic,".RData"))
     BC <- NA
     for(j in 1:ncol(mat.index)){
@@ -413,7 +418,7 @@ mean_BC
 
 # Retrive all mimic coordinates
 all_mimic_mat.index <- data.frame(matrix(ncol = 0, nrow=2))
-for (i in 1:length(mimicry.list)) { # Par cercles mimétiques
+for (i in 1:length(mimicry.list)) { # Par cercles mim?tiques
   mimic <- mimicry.list[i]
   load(file = paste0(internal.wd,"/Community_Structure/mat.index.",mimic,".RData"))
   all_mimic_mat.index <- cbind(all_mimic_mat.index,mat.index)
@@ -445,7 +450,7 @@ Global_no.mimic_mean_BC <- mean(BC_no.mimic) ; Global_no.mimic_mean_BC # 0.963
 
 save(Global_mean_BC, Global_mimic_mean_BC, Global_no.mimic_mean_BC, file = paste0(internal.wd,"/Community_Structure/All_Global_BC.RData"))
 
-# Boxplots plutôt moches car beaucoup d'outliers
+# Boxplots plut?t moches car beaucoup d'outliers
 All_BC <- c(BC_mimic, BC_no.mimic)
 Status <- as.factor(c(rep("Mimic", length(BC_mimic)), rep("Non-Mimic", length(BC_no.mimic))))
 boxplot(All_BC~Status)
@@ -491,7 +496,7 @@ for (k in 36:1000) { # 1000 simulations
   mimicry.list <- as.character(unique(list.models$Mimicry.model)) # 44 Mimicry rings
   
   mean_BC <- NA
-  for (i in 1:length(mimicry.list)) { # Par cercles mimétiques
+  for (i in 1:length(mimicry.list)) { # Par cercles mim?tiques
     mimic <- mimicry.list[i]
     for (j in 1:nrow(list.models)) { # Recherche de l'index des units originelles
       tags <- as.character(list.models$Tag.model[shuffle.list.unit$Mimicry.model == mimic])
@@ -502,7 +507,7 @@ for (k in 36:1000) { # 1000 simulations
       save(mat.index, file = paste0(internal.wd,"/Community_Structure/Simuls/mat.index.",mimic,".RData"))
       mean_BC[i] <- NA
     }else{ # Cas normal avec au moins 2 units.
-      mat.index <- combn(x = index, m = 2, FUN = c) # Récupération de toutes les combinaisons de paires de units possibles
+      mat.index <- combn(x = index, m = 2, FUN = c) # R?cup?ration de toutes les combinaisons de paires de units possibles
       save(mat.index, file = paste0(internal.wd,"/Community_Structure/Simuls/mat.index.",mimic,".RData"))
       BC <- NA
       for(j in 1:ncol(mat.index)){
@@ -518,7 +523,7 @@ for (k in 36:1000) { # 1000 simulations
   
   # Retrive all mimic coordinates
   all_mimic_mat.index <- data.frame(matrix(ncol = 0, nrow=2))
-  for (i in 1:length(mimicry.list)) { # Par cercles mimétiques
+  for (i in 1:length(mimicry.list)) { # Par cercles mim?tiques
     mimic <- mimicry.list[i]
     load(file = paste0(internal.wd,"/Community_Structure/Simuls/mat.index.",mimic,".RData"))
     all_mimic_mat.index <- cbind(all_mimic_mat.index,mat.index)
@@ -541,7 +546,7 @@ for (k in 36:1000) { # 1000 simulations
   BC_mimic_null[k] <- mean(BC_mimic)
   BC_no.mimic_null[k] <- mean(BC_no.mimic)
   
-  cat(paste0(Sys.time(), " - Simul n°", k,"\n"))
+  cat(paste0(Sys.time(), " - Simul n?", k,"\n"))
   save(mean_BC_null, BC_mimic_null, BC_no.mimic_null, file = paste0(internal.wd,"/Community_Structure/Simuls/All_simul_BC.RData"))
 }
 
@@ -628,16 +633,16 @@ load(file = paste0(internal.wd,"/envCom.RData"))
 
 # Fonction pour calculer l'indice de simpson car vegan fait de la merde !!!
 simpson <- function (x, na.rm) {
-  if (any(is.na(x))) { # Cas avec une valeur à NA
+  if (any(is.na(x))) { # Cas avec une valeur ? NA
     y <- NA
-  }else{ # Cas avec toutes valeurs renseignées
+  }else{ # Cas avec toutes valeurs renseign?es
     y <- x/sum(x)
     y <- 1-(sum(y*y))
   }
   return(y)
 }
 
-# Sous-échantillonnage de N communautés
+# Sous-?chantillonnage de N communaut?s
 subsampling <- 1000
 sample.index <- sample(x = which(tot.sp.richness@data@values>0), size = subsampling, replace = F)
 
@@ -666,7 +671,7 @@ for (i in 1:subsampling) {
 # Compute pairwise geographical distances
 coord <- coordinates(tot.sp.richness)[sample.index,]
 # plot(coord)
-Pairwise_geodist = geosphere::distm(x = coord)/1000 # Dist Geo sur l'ellipsoid de référence WGS84, en km
+Pairwise_geodist = geosphere::distm(x = coord)/1000 # Dist Geo sur l'ellipsoid de r?f?rence WGS84, en km
 
 # Compute pairwise euclidian climatic distances on standardized climatic variables
 sampled_com_env <- envCom@data@values[sample.index,]
@@ -696,12 +701,12 @@ load(file = paste0(internal.wd, "/Community_Structure/Resultats_Mantel_Ist_geo_S
 ## Mantel Partial Test : Ist ~ Dclim + cov(Dgeo)
 library("vegan")
 
-# Vérifie la normalité
+# V?rifie la normalit?
 hist(Pairwise_climdist)
 hist(Pairwise_geodist)
 hist(pairwise_Ist)
 
-# Réalise le test avec r de Pearson
+# R?alise le test avec r de Pearson
 Mantel.Pearson <- mantel.partial(xdis = pairwise_Ist, ydis = Pairwise_climdist, zdis = Pairwise_geodist, method = "pearson", na.rm = T) # Z = effet confondant ? retirer lors de la mesure de correlation partielle entre X et Y.
 Mantel.Pearson
 save(Mantel.Pearson, file = paste0(internal.wd, "/Community_Structure/Resultats_Mantel_partiel_Ist_Pearson.RData"))
@@ -713,7 +718,7 @@ abline(v = Mantel.Pearson$statistic, lty = 2, lwd = 2, col = "red")
 text(x = 0.18, y = 50, labels = paste0("r = ",round(Mantel.Pearson$statistic, 3), "\n p <0.001"), col = "red")
 dev.off()
 
-# Réalise le test avec rho de Spearman
+# R?alise le test avec rho de Spearman
 Mantel.Spearman <- mantel.partial(xdis = pairwise_Ist, ydis = Pairwise_climdist, zdis = Pairwise_geodist, method = "spearman", na.rm = T) # Z = effet confondant ? retirer lors de la mesure de correlation partielle entre X et Y.
 Mantel.Spearman
 save(Mantel.Spearman, file = paste0(internal.wd, "/Community_Structure/Resultats_Mantel_partiel_Ist_Spearman.RData"))
@@ -741,7 +746,7 @@ par(mar = original_int_margins)
 dev.off()
 
 
-## Plot de la relation avec 1000 points tirés au hasard parmi les n(n-1)/2 valeurs de distances
+## Plot de la relation avec 1000 points tir?s au hasard parmi les n(n-1)/2 valeurs de distances
 
 # Extraction des vecteurs
 pairwise_Ist_vec <- as.dist(pairwise_Ist)[which(!is.na(as.dist(pairwise_Ist)))]
@@ -778,7 +783,7 @@ abline(reg.geo, lwd = 2, col = "red")
 par(mar = original_int_margins)
 dev.off()
 
-# Ist ~ Dclim + covar(Dgeo) (régression sur les résidus)
+# Ist ~ Dclim + covar(Dgeo) (r?gression sur les r?sidus)
 Ist_resid <- residuals(reg.geo, type = "response")
 reg.clim.geo <- lm(Ist_resid~pairwise_climdist_vec)
 summary(reg.clim.geo)

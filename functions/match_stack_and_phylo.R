@@ -1,7 +1,9 @@
 #### Function that matches species list in stack and phylogeny and clean them ####
 
-# Author: Maël Doré
-# Contact: mael.dore@gmail.com
+###################################
+#      Author: Maël Doré          #
+#  Contact: mael.dore@gmail.com   #
+###################################
 
 ### Function
 

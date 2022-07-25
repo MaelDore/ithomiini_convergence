@@ -1,5 +1,10 @@
 ##### Script 06: Test fit of Evolutionary models, test for mean Climatic distance and phyloMANOVA #####
 
+###################################
+#      Author: Maël Doré          #
+#  Contact: mael.dore@gmail.com   #
+###################################
+
 # Fit the best neutral evolutionary models
 # Test for convergence in the climatic niche via mean climatic distance of comimics
 # Run Phylogenetic MANOVA to test for divergence among rings for the climatic niche, accounting for the phylogeny 
@@ -302,9 +307,9 @@ lambda.ml$AICc - kappa.lambda.ml_max$AICc # Delta AICc = 2.21
 # In the end, we chose the lambda model as the best model we can be confident with its parameter estimate.
 
 best_model_2pPCA <- lambda.ml
-lamdba_best_model_2pPCA <- best_model_2pPCA$Lambda[1,1]
+lambda_best_model_2pPCA <- best_model_2pPCA$Lambda[1,1]
 
-save(best_model_2pPCA, lamdba_best_model_2pPCA, file = paste0("./outputs/Niche_evolution/Phylo_signal/best_model_2pPCA.RData"))
+save(best_model_2pPCA, lambda_best_model_2pPCA, file = paste0("./outputs/Niche_evolution/Phylo_signal/best_model_2pPCA.RData"))
 
 
 ##### 3/ Traits simulation and comimicry matrices #####
@@ -319,21 +324,62 @@ library(phylocurve)
 
 ?sim.traits # Need to provide the model type, the parameters, the evolutionary covariance matrix and ancestral states estimated from motmot.2.0
 
+phylocurve:::sim.traits
+
 # Simulation done at species level since the evolutionary model could not be evaluated for OMUs (vcv matrix not invertible due to duplicate in the phylogenetic tree)
 # Since OMUs of the same species occupy the same place in the tree, they will get a value simulated for "within-species observations"
+# By default, phylocurve::sim.traits() add a normally distributed noise for each "within-species" observation that follows N(0, 0.1), so a within-species sd of 0.1 = within-species variance of 0.01
+    # Could be set to zero to be conservative and assume no within-species variance (across the OMU) in the absence of information
+    # Conservative because it will force non-mimetic OMU of the same species to be similar in the simulations
+    # Should not change a lot our results for the MCD approaches because it is based on comimic distances.
+    # Should not change much more the phyloMANOVA because the within-variance was very low anyway.
 # Thus simulation are conducted with the number of repetitions = max nb of OMUs per species (nreps = 8), to be able to randomly attribute a simulated value to each OMU
 
 OMUs_counts_table <- table(list.unit_phyl_order_719$Sp_full)[order(table(list.unit_phyl_order_719$Sp_full), decreasing = T)] ; OMUs_counts_table
 max_nb_OMUs <- OMUs_counts_table[1]
 
+### Options for within-species variance:
+
+## 1/ No variance = all OMUs from the same species have the same values. The more conservative.
+intraspecific = 0
+intraspecific_choice <- "_null"
+
+## 2/ Default value in the function, for a weak within-species variance
+intraspecific = 0.1
+intraspecific_choice <- "" # Former version, default option
+
+## 3/ Data-informed. Costumed within-species variance based on observations, for each species
+
+# Input parameter = matrix with row = species; columns = traits; values = within-species sd per species per traits
+intraspecific_choice <- "_from_obs"
+
+# Load observed values at OMU level in the pPC-axes (see 4.1)
+load(file = paste0("./outputs/Niche_evolution/Evol_simul/pPC.env_units_719.RData"))
+# Extract first 2 pPC-axes and retrieve OMU names
+pPC_env_OMU_719 <- pPC.env_units_719[, 1:2] %>% 
+  as.data.frame() %>% 
+  mutate(OMU = row.names(.))
+# Retrieve species names
+pPC_env_OMU_719$species <- paste(stringr::str_split(string = pPC_env_OMU_719$OMU, pattern = "\\.", simplify = T)[, 1], stringr::str_split(string = pPC_env_OMU_719$OMU, pattern = "\\.", simplify = T)[, 2], sep = ".")
+intraspecific <- pPC_env_OMU_719 %>% 
+  group_by(species) %>% 
+  summarize("sd1" = sd(V1), "sd2" = sd(V2)) %>%  # Compute sd within-species per pPC-axis
+  tidyr::replace_na(replace = list(sd1 = 0, sd2 = 0))  # sd fixed to zero for monomorphic species (one OMU)
+# Format as matrix for sim.traits()
+intraspecific <- as.matrix(intraspecific[match(intraspecific$species, phylo.Ithomiini$tip.label), c("sd1", "sd2")])
+row.names(intraspecific) <- phylo.Ithomiini$tip.label
+View(intraspecific)
+
+
 # Simulation at species level for 8 OMUs per species
 Sim_clim_2pPCA <- sim.traits(tree = phylo.Ithomiini,                                  # Species tree
-                             v = best_model_2pPCA$brownianVariance,                   # Evolutionary covariance matrix of pPCA-transformed climatic traits
+                             v = best_model_2pPCA$brownianVariance,                   # Evolutionary covariance matrix of pPCA-transformed climatic traits. Covariance should be close to 0 because these are pPCA-axes.
                              anc = best_model_2pPCA$root.state,                       # Ancestral state of pPCA-transformed climatic traits
                              model = "lambda",                                        # Pagel's lambda model type
-                             parameters = list(lambda = lamdba_best_model_2pPCA),     # Lambda = 0.409
+                             parameters = list(lambda = lambda_best_model_2pPCA),     # Lambda = 0.409
                              nsim = 999,                                              # 999 simulations to get a p-value ranging from 0.001 to 1
                              nreps = max_nb_OMUs,                                     # nreps = 8, to be able to attribute randomly a value for each OMUs of a species
+                             intraspecific = intraspecific,                                     # Default parameter for the within-species sd, corresponding to the sd of repeated simulations for a given species, hence the simulated dispersal of values across OMU of the same species
                              return.type = "matrix")
 str(Sim_clim_2pPCA_2)
 str(Sim_clim_2pPCA)
@@ -342,15 +388,18 @@ plot(Sim_clim_2pPCA$sim_tree) # Transformed tree with lambda = 0.408
 Sim_clim_2pPCA$original_X # List of simulation results for all species
 Sim_clim_2pPCA$trait_data # List of simulation results for all OMUs (8 per species)
 
-save(Sim_clim_2pPCA, file = paste0("./outputs/Niche_evolution/Evol_simul/Sim_clim_2pPCA.RData"))
+save(Sim_clim_2pPCA, file = paste0("./outputs/Niche_evolution/Evol_simul/Sim_clim_2pPCA",intraspecific_choice,".RData"))
+
+load(file = paste0("./outputs/Niche_evolution/Evol_simul/Sim_clim_2pPCA",intraspecific_choice,".RData"))
+
 
 # # Example for species 1 (Aeria eurimedia)
 # Sim_clim_2pPCA$original_X[[1]][1,] # Values for species
 # Sim_clim_2pPCA$trait_data[[1]][Sim_clim_2pPCA$trait_data[[1]]$species == row.names(Sim_clim_2pPCA$original_X[[1]])[1], ] # 8 values for potential OMUs of this species
 # 
-# # Example for species 1 (Aeria olena)
-# Sim_clim_2pPCA$original_X[[1]][2,] # Values for species
-# Sim_clim_2pPCA$trait_data[[1]][Sim_clim_2pPCA$trait_data[[1]]$species == row.names(Sim_clim_2pPCA$original_X[[1]])[2], ] # 8 values for potential OMUs of this species
+# # Example for species 3 (Aremfoxia ferra)
+# Sim_clim_2pPCA$original_X[[1]][3,] # Values for species
+# Sim_clim_2pPCA$trait_data[[1]][Sim_clim_2pPCA$trait_data[[1]]$species == row.names(Sim_clim_2pPCA$original_X[[1]])[3], ] # 8 values for potential OMUs of this species
 
 ### 3.2/ Store results for the 719 OMUs ####
 
@@ -382,7 +431,7 @@ for (i in 1:length(Sim_clim_2pPCA$trait_data)) # Per simulation
   # Store matrix of simulated data in the list of simulations
   Sim_clim_2pPCA_OMUs_719[[i]] <- pPCA_simul_template
   
-  save(Sim_clim_2pPCA_OMUs_719, file = paste0("./outputs/Niche_evolution/Evol_simul/Sim_clim_2pPCA_OMUs_719.RData"))
+  save(Sim_clim_2pPCA_OMUs_719, file = paste0("./outputs/Niche_evolution/Evol_simul/Sim_clim_2pPCA_OMUs_719",intraspecific_choice,".RData"))
   
   if(i %% 10 == 0)
   {
@@ -391,6 +440,7 @@ for (i in 1:length(Sim_clim_2pPCA$trait_data)) # Per simulation
 
 }
 
+load(paste0("./outputs/Niche_evolution/Evol_simul/Sim_clim_2pPCA_OMUs_719",intraspecific_choice,".RData"))
 
 ### 3.3/ Extract the 619 OMUs included in the perMANOVA and phlyoMANOVA analyses ####
 
@@ -407,18 +457,19 @@ for (i in 1:length(Sim_clim_2pPCA_OMUs_719)) # Per simulation
   # Extract only the 619 OMUs and store them in the final list
   Sim_clim_2pPCA_OMUs_619 [[i]] <- pPCA_simul_temp[OMUs_619_indices, ]
   
-  if(i %% 10 == 0)
+  if(i %% 100 == 0)
   {
     cat(paste0("Simulation n° ",i, "/999\n"))
   }
   
 }
 
-save(Sim_clim_2pPCA_OMUs_619, file = paste0("./outputs/Niche_evolution/Evol_simul/Sim_clim_2pPCA_OMUs_619.RData"))
+save(Sim_clim_2pPCA_OMUs_619, file = paste0("./outputs/Niche_evolution/Evol_simul/Sim_clim_2pPCA_OMUs_619",intraspecific_choice,".RData"))
 
 
 ### 3.4/ Compute co-mimicry matrix for the 619 OMUs in the perMANOVA and phlyoMANOVA analyses ####
 
+# Incidence matrix: 1 = comic, 0 = non-comimic. Used to quickly compute mean for comimimetic OMUs.
 comimicry_matrix_units_619 <- matrix(nrow = nrow(reduced.list.unit_phyl_order), ncol = nrow(reduced.list.unit_phyl_order), data = 0)
 for (i in 1:nrow(reduced.list.unit_phyl_order))
 {
@@ -435,6 +486,7 @@ for (i in 1:nrow(reduced.list.unit_phyl_order))
   }
   if (i %% 10 == 0) {print(i)}
 }
+colnames(comimicry_matrix_units_619) <- rownames(comimicry_matrix_units_619) <- reduced.list.unit_phyl_order$Tag.model
 save(comimicry_matrix_units_619, file = paste0("./outputs/Niche_evolution/comimicry_matrix_units_619.RData"))
 
 
@@ -447,14 +499,17 @@ load(file = paste0("./outputs/Niche_evolution/unit.env.table_719.RData"))
 
 # Standardize env traits following Revell's procedure
 X <- as.matrix(unit.env.table_719) # Env data for OMU
-V <- PCA.Revell$evolVCV        # Evolutionary variance/covariance matrix of environmental traits based on sp phenetic distances and env data
-a <- PCA.Revell$ancestral      # Ancestral state of env traits based on sp phenetic distances and env data
-eigenV <- PCA.Revell$Evec      # Eigenvectors to project in new space
-one <- matrix(1,nrow(X),1)     # Vector to get means
-X <- X/(one %*% t(sqrt(diag(V))))  # Standardized env data
-pPC.env_units_719 <- (X-one%*%t(a)) %*% eigenV # Project OMu data in new space
+V <- PCA.Revell$evolVCV            # Evolutionary variance/covariance matrix of environmental traits (at species-level)
+a <- PCA.Revell$ancestral          # Ancestral state of env traits
+eigenV <- PCA.Revell$Evec          # Eigenvectors to project in new space
+one <- matrix(1,nrow(X),1)         # Vector of ones to transform vector into matrix
+X <- X/(one %*% t(sqrt(diag(V))))  # Standardized env data by dividing each columns by the standard deviation (sqrt of the diagonale of the VCV) of each traits in the evolutionary VCV
+X <- (X-one%*%t(a))                # Center data by subtracting the ancestral state as the evolutionary corrected mean (starting point for simulating data)
+pPC.env_units_719 <- X %*% eigenV  # Project standardized OMU data in new space using EigenVectors from the pPCA
 
 save(pPC.env_units_719, file = paste0("./outputs/Niche_evolution/Evol_simul/pPC.env_units_719.RData"))
+
+load(file = paste0("./outputs/Niche_evolution/Evol_simul/pPC.env_units_719.RData"))
 
 
 ### 4.2/ Compute MCD and null distri for all comimics ####
@@ -475,7 +530,19 @@ Comimic_MCD_obs_std <- Comimic_MCD_obs/Global_MCD_obs # Standardized MCD obs = 0
 
 save(Global_MCD_obs, Comimic_MCD_obs, Comimic_MCD_obs_std, file = paste0("./outputs/Niche_evolution/Evol_simul/MCD_obs_stats_719.RData"))
 
-# Compute these stats for all the simulations
+load(paste0("./outputs/Niche_evolution/Evol_simul/MCD_obs_stats_719.RData"))
+
+### Compute these stats for all the simulations
+
+# Choose the within-species variation model
+intraspecific_choice <- ""
+intraspecific_choice <- "_null"
+intraspecific_choice <- "_from_obs"
+
+# Load data depending of choice for modeling within-species variation (intraspecific_choice)
+load(paste0("./outputs/Niche_evolution/Evol_simul/Sim_clim_2pPCA_OMUs_719",intraspecific_choice,".RData"))
+
+# Loop per simulations
 Global_MCD_null <- Comimic_MCD_null <- Comimic_MCD_std_null <-  NA # Initiate vectors to store results
 for (i in 1:length(Sim_clim_2pPCA_OMUs_719)) # Per simulation
 {
@@ -495,22 +562,28 @@ for (i in 1:length(Sim_clim_2pPCA_OMUs_719)) # Per simulation
   Comimic_MCD_null[i] <- Comimic_MCD_simul
   Comimic_MCD_std_null[i] <- Comimic_MCD_std_simul
   
-  save(Global_MCD_null, Comimic_MCD_null, Comimic_MCD_std_null, file = paste0("./outputs/Niche_evolution/Evol_simul/MCD_null_stats_719.RData"))
+  save(Global_MCD_null, Comimic_MCD_null, Comimic_MCD_std_null, file = paste0("./outputs/Niche_evolution/Evol_simul/MCD_null_stats_719",intraspecific_choice,".RData"))
   
   if(i %% 10 == 0) {cat(paste0("Simulation n° ",i, "/999\n"))}
 }
-save(Global_MCD_null, Comimic_MCD_null, Comimic_MCD_std_null, file = paste0("./outputs/Niche_evolution/Evol_simul/MCD_null_stats_719.RData"))
+save(Global_MCD_null, Comimic_MCD_null, Comimic_MCD_std_null, file = paste0("./outputs/Niche_evolution/Evol_simul/MCD_null_stats_719",intraspecific_choice,".RData"))
 
 summary(Comimic_MCD_std_null)
 
 
 ### 4.3/ Plot the distri of the stats for all comimics ####
 
+# Choose the within-species variation model
+intraspecific_choice <- ""
+intraspecific_choice <- "_null"
+intraspecific_choice <- "_from_obs"
+
+# Load data
 load(file = paste0("./outputs/Niche_evolution/Evol_simul/MCD_obs_stats_719.RData"))
-load(file = paste0("./outputs/Niche_evolution/Evol_simul/MCD_null_stats_719.RData"))
+load(file = paste0("./outputs/Niche_evolution/Evol_simul/MCD_null_stats_719",intraspecific_choice,".RData"))
 
-
-pdf(file = "./graphs/Niche_evolution/Evol_simul/Comimics_MCD_null_719.pdf", height = 6, width = 7)
+# Plot
+pdf(file = paste0("./graphs/Niche_evolution/Evol_simul/Comimics_MCD_null_719",intraspecific_choice,".pdf"), height = 6, width = 7)
 
 original_ext_margins <- par()$oma
 original_int_margins <- par()$mar
@@ -588,7 +661,7 @@ save(MCD_per_ring_obs, MCD_std_per_ring_obs, file = paste0("./outputs/Niche_evol
 # Compute MCD per ring for all the simulations
 
 # Load MCD null stats to extract global MCD for each simulation. Used for standardization.
-load(file = paste0("./outputs/Niche_evolution/Evol_simul/MCD_null_stats_719.RData"))
+load(file = paste0("./outputs/Niche_evolution/Evol_simul/MCD_null_stats_719",intraspecific_choice,".RData"))
 
 MCD_per_ring_simul <- NA # Initiate vectors to store results
 MCD_per_ring_null <- MCD_std_per_ring_null <- matrix(data = NA, nrow = length(Sim_clim_2pPCA_OMUs_719), ncol = length(ring_list)) # Initiate matrix to store results
@@ -596,7 +669,7 @@ for (i in 1:length(Sim_clim_2pPCA_OMUs_719)) # Per simulation
 {
   # i <- 1
   
-  # Compute the pairwise climatic distance matrix between the 619 OMUs based on simulated pPCA variables
+  # Compute the pairwise climatic distance matrix between the 719 OMUs based on simulated pPCA variables
   pairwise_climdist_pPCA_719_simul <- as.matrix(dist(x = Sim_clim_2pPCA_OMUs_719[[i]], method = "euclidian"))
   
   for (j in 1:length(ring_list)) # Per mimicry ring
@@ -622,12 +695,13 @@ for (i in 1:length(Sim_clim_2pPCA_OMUs_719)) # Per simulation
   # Store results for each simulation                        
   MCD_per_ring_null[i, ] <- MCD_per_ring_simul
   MCD_std_per_ring_null[i, ] <- MCD_per_ring_simul/Global_MCD_null[i] # Compute standardized MCD for this simulation
-  
-  save(MCD_per_ring_null, MCD_std_per_ring_null, file = paste0("./outputs/Niche_evolution/Evol_simul/MCD_per_ring_null_stats_719.RData"))
+
+  save(MCD_per_ring_null, MCD_std_per_ring_null, file = paste0("./outputs/Niche_evolution/Evol_simul/MCD_per_ring_null_stats_719",intraspecific_choice,".RData"))
   
   if(i %% 10 == 0) {cat(paste0("Simulation n° ",i, "/999\n"))}
 }
-save(MCD_per_ring_null, MCD_std_per_ring_null, file = paste0("./outputs/Niche_evolution/Evol_simul/MCD_per_ring_null_stats_719.RData"))
+colnames(MCD_per_ring_null) <- colnames(MCD_std_per_ring_null) <- ring_list
+save(MCD_per_ring_null, MCD_std_per_ring_null, file = paste0("./outputs/Niche_evolution/Evol_simul/MCD_per_ring_null_stats_719",intraspecific_choice,".RData"))
 
 summary(MCD_std_per_ring_null)
 
@@ -635,7 +709,7 @@ summary(MCD_std_per_ring_null)
 ### 4.5/ Plot MCD null distri per mimicry ring and generate summary table ####
 
 load(file = paste0("./outputs/Niche_evolution/Evol_simul/MCD_per_ring_obs_719.RData"))
-load(file = paste0("./outputs/Niche_evolution/Evol_simul/MCD_per_ring_null_stats_719.RData")) 
+load(file = paste0("./outputs/Niche_evolution/Evol_simul/MCD_per_ring_null_stats_719",intraspecific_choice,".RData")) 
 
 MCD_std_per_ring_obs
 MCD_std_per_ring_null
@@ -663,7 +737,7 @@ for (i in 1:length(ring_list)) # Per mimicry ring
   
   if (is.na(MCD_std_per_ring_obs[i])) # Case for ring with only one OMUs. No pairs. No MCD.
   {
-    pdf(file = paste0("./graphs/Niche_evolution/Evol_simul/Per_ring/MCD_null_",ring,".pdf"), height = 6, width = 7)
+    pdf(file = paste0("./graphs/Niche_evolution/Evol_simul/Per_ring/MCD_null_",ring,intraspecific_choice,".pdf"), height = 6, width = 7)
     
     plot(1:100,1:100, type = "n", xlab = "Standardized Mean pairwise Climatic Distance",
          main = paste0("Distribution of Mean Climatic Distance \n of ", ring, " OMUs \n under neutral evolution"))
@@ -697,7 +771,7 @@ for (i in 1:length(ring_list)) # Per mimicry ring
                        breaks = 30,
                        plot = F)
     
-    pdf(file = paste0("./graphs/Niche_evolution/Evol_simul/Per_ring/MCD_null_",ring,".pdf"), height = 6, width = 7)
+    pdf(file = paste0("./graphs/Niche_evolution/Evol_simul/Per_ring/MCD_null_",ring,intraspecific_choice,".pdf"), height = 6, width = 7)
     
     hist(c(MCD_std_per_ring_null[,i], MCD_std_per_ring_obs[i]), 
          breaks = 30,
@@ -724,13 +798,13 @@ for (i in 1:length(ring_list)) # Per mimicry ring
     dev.off()
   }
   
-  save(MCD_ring_summary_table_719, file = paste0("./outputs/Niche_evolution/Evol_simul/MCD_ring_summary_table_719.Rdata"))
+  save(MCD_ring_summary_table_719, file = paste0("./outputs/Niche_evolution/Evol_simul/MCD_ring_summary_table_719",intraspecific_choice,".Rdata"))
   
   cat(paste0("N° ",i, "/",length(ring_list)," - ",ring, " - Done \n"))
 }
 
 View(MCD_ring_summary_table_719)
-write.csv2(MCD_ring_summary_table_719, file = "./tables/MCD_ring_summary_table_719.csv")
+write.csv2(MCD_ring_summary_table_719, file = paste0("./tables/MCD_ring_summary_table_719",intraspecific_choice,".csv"))
 
 
 
@@ -866,14 +940,19 @@ write.csv2(MCD_ring_summary_table_719, file = "./tables/MCD_ring_summary_table_7
 
 ##### 5/ phlyoMANOVA to test for divergence of climatic niche among rings #####
 
+# Choose the within-species variation model
+intraspecific_choice <- ""
+intraspecific_choice <- "_null"
+intraspecific_choice <- "_from_obs"
+
 # Need to use only the 619 OMUs included in rings with N >= 10
 load(file = paste0("./outputs/Niche_evolution/reduced.list.unit_phyl_order.RData"))
-load(file = paste0("./outputs/Niche_evolution/Evol_simul/Sim_clim_2pPCA_OMUs_619.RData"))
+load(file = paste0("./outputs/Niche_evolution/Evol_simul/Sim_clim_2pPCA_OMUs_619",intraspecific_choice,".RData"))
 load(file = paste0("./outputs/Niche_evolution/permMANOVA/pPC.env_units.RData"))
 
 reduced.list.unit_phyl_order
 pPC.env_units
-Sim_clim_2pPCA_OMUs_619
+str(Sim_clim_2pPCA_OMUs_619)
 
 identical(rownames(pPC.env_units), reduced.list.unit_phyl_order$Tag.model)
 
@@ -904,16 +983,16 @@ for (i in 1:length(Sim_clim_2pPCA_OMUs_619)) # Per simulation
 }
 summary(Wilks_lambda_null_pPCA)
 summary(Pseudo_F_null_pPCA)
-save(Wilks_lambda_null_pPCA, file = paste0("./outputs/Niche_evolution/Evol_simul/Wilks_lambda_null_pPCA.RData"))
-save(Pseudo_F_null_pPCA, file = paste0("./outputs/Niche_evolution/Evol_simul/Pseudo_F_null_pPCA.RData"))
+save(Wilks_lambda_null_pPCA, file = paste0("./outputs/Niche_evolution/Evol_simul/Wilks_lambda_null_pPCA",intraspecific_choice,".RData"))
+save(Pseudo_F_null_pPCA, file = paste0("./outputs/Niche_evolution/Evol_simul/Pseudo_F_null_pPCA",intraspecific_choice,".RData"))
 
 ### 5.3/ Plot the distri of the Wilks lambda ####
 
 load(file = paste0("./outputs/Niche_evolution/Evol_simul/Wilks_lambda_obs_pPCA.RData"))
-load(file = paste0("./outputs/Niche_evolution/Evol_simul/Wilks_lambda_null_pPCA.RData"))
+load(file = paste0("./outputs/Niche_evolution/Evol_simul/Wilks_lambda_null_pPCA",intraspecific_choice,".RData"))
 
 
-pdf(file = "./graphs/Niche_evolution/Evol_simul/MANOVA_phylo_pPCA_Wilks.pdf", height = 6, width = 7)
+pdf(file = paste0("./graphs/Niche_evolution/Evol_simul/MANOVA_phylo_pPCA_Wilks",intraspecific_choice,".pdf"), height = 6, width = 7)
 
 hist(c(Wilks_lambda_null_pPCA, Wilks_lambda_obs_pPCA), 30, freq = TRUE, col = "gray", 
      main = bquote("Phylogenetic MANOVA \n Distribution of Wilks" ~lambda~ "\n under neutral evolution"),
@@ -945,10 +1024,10 @@ dev.off()
 ### 5.4/ Plot the distri of the pseudo-F ####
 
 load(file = paste0("./outputs/Niche_evolution/Evol_simul/Pseudo_F_obs_pPCA.RData"))
-load(file = paste0("./outputs/Niche_evolution/Evol_simul/Pseudo_F_null_pPCA.RData"))
+load(file = paste0("./outputs/Niche_evolution/Evol_simul/Pseudo_F_null_pPCA",intraspecific_choice,".RData"))
 
 
-pdf(file = "./graphs/Niche_evolution/Evol_simul/MANOVA_phylo_pPCA_pseudo_F.pdf", height = 6, width = 7)
+pdf(file = paste0("./graphs/Niche_evolution/Evol_simul/MANOVA_phylo_pPCA_pseudo_F",intraspecific_choice,".pdf"), height = 6, width = 7)
 
 hist(c(Pseudo_F_null_pPCA, Pseudo_F_obs_pPCA), 50, freq = TRUE, col = "gray", 
      main = "Phylogenetic MANOVA\n Distribution of pseudo-F\n under neutral evolution",
@@ -981,15 +1060,15 @@ dev.off()
 ##### 6/ Plot both MCD and Wilks' lambda #####
 
 load(file = paste0("./outputs/Niche_evolution/Evol_simul/MCD_obs_stats_719.RData"))
-load(file = paste0("./outputs/Niche_evolution/Evol_simul/MCD_null_stats_719.RData"))
+load(file = paste0("./outputs/Niche_evolution/Evol_simul/MCD_null_stats_719",intraspecific_choice,".RData"))
 
 load(file = paste0("./outputs/Niche_evolution/Evol_simul/Wilks_lambda_obs_pPCA.RData"))
-load(file = paste0("./outputs/Niche_evolution/Evol_simul/Wilks_lambda_null_pPCA.RData"))
+load(file = paste0("./outputs/Niche_evolution/Evol_simul/Wilks_lambda_null_pPCA",intraspecific_choice,".RData"))
 
 round(Comimic_MCD_obs_std, 3) # MCD obs = 0.782
 format(round(Wilks_lambda_obs_pPCA, 3), nsmall = 3) # Lambda obs = 0.271
 
-pdf(file = "./graphs/Niche_evolution/Evol_simul/Wilks_lambda_&_MCD_both_plots.pdf", height = 6.4, width = 14)
+pdf(file = paste0("./graphs/Niche_evolution/Evol_simul/Wilks_lambda_&_MCD_both_plots",intraspecific_choice,".pdf"), height = 6.4, width = 14)
 
 original_ext_margins <- par()$oma
 original_int_margins <- par()$mar

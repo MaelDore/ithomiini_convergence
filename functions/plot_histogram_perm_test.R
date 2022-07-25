@@ -1,7 +1,9 @@
 ### Function to plot histogram of null distribution during permutation test ####
 
-# Author: Maël Doré
-# Contact: mael.dore@gmail.com
+###################################
+#      Author: Maël Doré          #
+#  Contact: mael.dore@gmail.com   #
+###################################
 
 ### Generate histrogram associated with a permutation test
 

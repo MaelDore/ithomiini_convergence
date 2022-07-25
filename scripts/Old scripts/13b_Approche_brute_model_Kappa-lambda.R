@@ -1,4 +1,9 @@
-##### Approche brute de l'estimation du meilleur modèle Kappa - Lambda #####
+##### Approche brute de l'estimation du meilleur modÃ¨le Kappa - Lambda #####
+
+###################################
+#      Author: MaÃ«l DorÃ©          #
+#  Contact: mael.dore@gmail.com   #
+###################################
 
 ### Preparation ###
 
@@ -27,14 +32,14 @@ list.models <- list.models[list.models$Sp_full %in% phylo.Ithomiini$tip.label,] 
 load(file = paste0(internal.wd,"/sp.env.table.RData"))
 
 
-##### Approche bivariée après pPCA (car Revell dit que l'on ne peut pas faire de PCA sur des données phylo. sans prendre en compte la phylogénie) #####
+##### Approche bivari?e apr?s pPCA (car Revell dit que l'on ne peut pas faire de PCA sur des donn?es phylo. sans prendre en compte la phylog?nie) #####
 
 load(file = paste0(internal.wd,"/sp.env.table.RData"))
 
 sp.env.table <- list.sp[,c("bio1","bio3","bio4","bio12","bio15")]
 row.names(sp.env.table) <- list.sp$Sp_full
 
-# Vérifier que les espèces sont bien ordonnées de la même manière
+# V?rifier que les esp?ces sont bien ordonn?es de la m?me mani?re
 list.sp$Sp_full
 phylo.Ithomiini$tip.label
 
@@ -52,9 +57,9 @@ PCA.Revell$Evec # eigenvectors
 PCA.Revell$S # scores
 PCA.Revell$L # PC loadings
 
-round(diag(PCA.Revell$Eval)/sum(PCA.Revell$Eval),3) # % Variance expliquée
-round(cumsum(diag(PCA.Revell$Eval))/sum(PCA.Revell$Eval),3) # % Variance expliquée cumulative
-# 91% de la variance expliquée avec les 2 premiers axes, on ne garde que ces deux axes !
+round(diag(PCA.Revell$Eval)/sum(PCA.Revell$Eval),3) # % Variance expliqu?e
+round(cumsum(diag(PCA.Revell$Eval))/sum(PCA.Revell$Eval),3) # % Variance expliqu?e cumulative
+# 91% de la variance expliqu?e avec les 2 premiers axes, on ne garde que ces deux axes !
 
 library(ade4)
 s.corcircle(PCA.Revell$L, xax=1, yax=2, label = names(sp.env.table)) # Pour tracer le cercle des correlations entre variables d'origine et CP. On peut choisir quelles CP sont repr?sent?es sur les axes x et y
@@ -73,37 +78,37 @@ par(mfcol=(c(1,1)))
 # Create summary table
 Models.PC.Revell.df <- data.frame(Model = character(), Likelihood = numeric(), AICc = numeric(), param1 = numeric(), param2 = numeric())
 Models.PC.Revell.df$Model <- as.character(Models.PC.Revell.df$Model)
-# Modèle Brownien
+# Mod?le Brownien
 Revell.bm.ml <- transformPhylo.ML(phy=phylo.Ithomiini, y=as.matrix(PC.Revell.env), model="bm")
 Revell.bm.ml
 Models.PC.Revell.df[1,] <-  c("BM", round(Revell.bm.ml$logLikelihood, 3), round(Revell.bm.ml$AICc, 3), NA, NA)
 
-# Modèle avec Pagel's lambda
+# Mod?le avec Pagel's lambda
 Revell.lambda.ml <- transformPhylo.ML(phy=phylo.Ithomiini, y=as.matrix(PC.Revell.env), model="lambda", profilePlot=T)
 Revell.lambda.ml
 Models.PC.Revell.df[2,] <-  c("Lambda", round(Revell.lambda.ml$MaximumLikelihood, 3), round(Revell.lambda.ml$AICc, 3), round(Revell.lambda.ml$Lambda[1,1],3), NA)
 p.value <- 1 - pchisq(Revell.lambda.ml$MaximumLikelihood - Revell.bm.ml$logLikelihood, 1) ; p.value
 Revell.bm.ml$AICc - Revell.lambda.ml$AICc
 
-# Pagel's lambda univarié pour voir
+# Pagel's lambda univari? pour voir
 var <- 2
 test <- as.matrix(PC.Revell.env[,var]) ; row.names(test) <- list.sp$Sp_full 
 test.lambda.ml <- transformPhylo.ML(phy=phylo.Ithomiini, y=test, model="lambda", profilePlot=T)
 test.lambda.ml
 
-# Test du signal phylogénétique en multivariée avec lambda de Pagel
+# Test du signal phylog?n?tique en multivari?e avec lambda de Pagel
 tree0 <- transformPhylo(phy = phylo.Ithomiini, model = "lambda", y = as.matrix(PC.Revell.env), lambda = 0) # Transformation de l'arbre sous Pagel's lambda = 0
-Revell.lambda0.ml <- transformPhylo.ML(phy=tree0, y=as.matrix(PC.Revell.env), model="bm") # Estimation du meilleur modèle en BM sur l'arbre transformé
-p.value <- 1 - pchisq(Revell.lambda.ml$MaximumLikelihood - Revell.lambda0.ml$logLikelihood, 1) ; p.value # LRT via modèles emboités
+Revell.lambda0.ml <- transformPhylo.ML(phy=tree0, y=as.matrix(PC.Revell.env), model="bm") # Estimation du meilleur mod?le en BM sur l'arbre transform?
+p.value <- 1 - pchisq(Revell.lambda.ml$MaximumLikelihood - Revell.lambda0.ml$logLikelihood, 1) ; p.value # LRT via mod?les emboit?s
 
-# Modèle avec Pagel's Kappa
+# Mod?le avec Pagel's Kappa
 Revell.kappa.ml <- transformPhylo.ML(phy=phylo.Ithomiini, y=as.matrix(PC.Revell.env), model="kappa", profilePlot=T)
 p.value <- 1 - pchisq(Revell.kappa.ml$MaximumLikelihood - Revell.bm.ml$logLikelihood, 1) ; p.value
 Revell.bm.ml$AICc - Revell.kappa.ml$AICc
 Models.PC.Revell.df[3,] <-  c("Kappa", round(Revell.kappa.ml$MaximumLikelihood, 3), round(Revell.kappa.ml$AICc, 3), round(Revell.kappa.ml$Kappa[1,1],3), NA)
 
 
-# Modèle avec Pagel's lambda et Pagel's Kappa
+# Mod?le avec Pagel's lambda et Pagel's Kappa
 Revell.kappa.lambda.ml <- transformPhylo.ML(phy=phylo.Ithomiini, y=as.matrix(PC.Revell.env), model="kappa", lambdaEst = T, profilePlot=T)
 Revell.kappa.lambda.ml
 
@@ -120,7 +125,7 @@ for (i in 1:nrow(Lk.mat)) {
     tree_transfo <- transformPhylo(phy = phylo.Ithomiini, model = "lambda", lambda = lambda[j]) # Applique d'abord le lambda
     tree_transfo <- transformPhylo(phy = tree_transfo, model = "kappa", kappa = kappa[i]) # Puis le kappa
     # plot(tree_transfo, show.tip.label = F)
-    Revell.transfo <- transformPhylo.ML(phy=tree_transfo, y=as.matrix(PC.Revell.env), model="bm") # Estimation du meilleur modèle en BM sur l'arbre transformé
+    Revell.transfo <- transformPhylo.ML(phy=tree_transfo, y=as.matrix(PC.Revell.env), model="bm") # Estimation du meilleur mod?le en BM sur l'arbre transform?
     Lk.mat[i,j] <- Revell.transfo$logLikelihood 
   }
   print(i)
@@ -153,10 +158,10 @@ dev.off()
 
 tree_maxML <- transformPhylo(phy = phylo.Ithomiini, model = "lambda", lambda = lambda.max) # Applique d'abord le lambda
 tree_maxML <- transformPhylo(phy = tree_maxML, model = "kappa", kappa = kappa.max) # Puis le kappa
-Revell.kappa.lambda <- transformPhylo.ML(phy=tree_maxML, y=as.matrix(PC.Revell.env), model="bm") # Estimation du meilleur modèle en BM sur l'arbre transformé
+Revell.kappa.lambda <- transformPhylo.ML(phy=tree_maxML, y=as.matrix(PC.Revell.env), model="bm") # Estimation du meilleur mod?le en BM sur l'arbre transform?
 Revell.kappa.lambda.ml$MaximumLikelihood ; Revell.kappa.lambda$logLikelihood
 
-Revell.kappa.lambda$AICc <- Revell.kappa.lambda$AICc+4 # on ajoute la pénalisation pour les 2 paramètres à estimer en plus dans l'AICc
+Revell.kappa.lambda$AICc <- Revell.kappa.lambda$AICc+4 # on ajoute la p?nalisation pour les 2 param?tres ? estimer en plus dans l'AICc
 
 Models.PC.Revell.df[4,] <-  c("Kappa - Lambda", round(Revell.kappa.lambda$logLikelihood, 3), round(Revell.kappa.lambda$AICc, 3), kappa.max, lambda.max)
 p.value <- 1 - pchisq(Revell.kappa.lambda$logLikelihood - Revell.bm.ml$logLikelihood, 2) ; p.value
@@ -165,11 +170,11 @@ p.value <- 1 - pchisq(Revell.kappa.lambda$logLikelihood - Revell.kappa.ml$Maximu
 Revell.kappa.ml$AICc - Revell.kappa.lambda$AICc
 p.value <- 1 - pchisq(Revell.kappa.lambda$logLikelihood - Revell.lambda.ml$MaximumLikelihood, 1) ; p.value
 Revell.lambda.ml$AICc - Revell.kappa.lambda$AICc
-# Différence non-significative, on garde le modèle le plus simple soit le modèle avec simplement un lambda.
+# Diff?rence non-significative, on garde le mod?le le plus simple soit le mod?le avec simplement un lambda.
 
 save(Models.PC.Revell.df, file = paste0(internal.wd,"/Niche_evolution/Models.PC.Revell.df.RData"))
 
-# Modèles bonus
+# Mod?les bonus
 delta.ml <- transformPhylo.ML(phy=phylo.Ithomiini, y=as.matrix(PC.Revell.env), model="delta", profilePlot=T)
 ou.ml <- transformPhylo.ML(phy=phylo.Ithomiini, y=as.matrix(PC.Revell.env), model="OU", profilePlot=T)
 acdc.ml <- transformPhylo.ML(phy=phylo.Ithomiini, y=as.matrix(PC.Revell.env), model="ACDC", profilePlot=T)
@@ -187,7 +192,7 @@ Sim.Revell.res <- sim.traits(tree = phylo.Ithomiini, v = best.model$brownianVari
 
 str(Sim.Revell.res)
 plot(Sim.Revell.res$tree) # Arbre original
-plot(Sim.Revell.res$sim_tree) # Arbre après tranformation via lambda = 0.47
+plot(Sim.Revell.res$sim_tree) # Arbre apr?s tranformation via lambda = 0.47
 
 Sim.Revell.PC <- Sim.Revell.res$trait_data # Liste des simulations
 

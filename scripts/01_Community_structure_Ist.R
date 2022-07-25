@@ -1,5 +1,10 @@
 ##### Script 01: Community composition analysis with Ist #####
 
+###################################
+#      Author: Maël Doré          #
+#  Contact: mael.dore@gmail.com   #
+###################################
+
 # Compute Ist for all communities
 # Test signifiance through randomisation of mimicry pattern
 # Plot test results

@@ -1,5 +1,10 @@
 ##### Script 05: Phylogenetic signals #####
 
+###################################
+#      Author: Maël Doré          #
+#  Contact: mael.dore@gmail.com   #
+###################################
+
 # Test for phylogenetic signal in the evolution of mimicry patterns AND climatic niche
 
 ### Input files
@@ -104,6 +109,7 @@ for (i in 1:nrow(list.unit_phyl_order))
   }
   if (i %% 10 == 0) {print(i)}
 }
+row.names(comimicry_matrix_units) <- colnames(comimicry_matrix_units) <- list.unit_phyl_order$Tag.model
 save(comimicry_matrix_units, file = paste0("./outputs/Niche_evolution/comimicry_matrix_units.RData"))
 
 load(file = paste0("./outputs/Niche_evolution/comimicry_matrix_units.RData"))

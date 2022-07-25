@@ -1,7 +1,9 @@
 #### Function that match species list in a data frame and phylogeny and clean them ####
 
-# Author: Maël Doré
-# Contact: mael.dore@gmail.com
+###################################
+#      Author: Maël Doré          #
+#  Contact: mael.dore@gmail.com   #
+###################################
 
 ### Inputs
  # Dataframe with species as rows. Typically, community data with sites as columns

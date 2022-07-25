@@ -1,5 +1,10 @@
 #### Function to compute probability of presence at larger spatial or hierarchical scale ####
 
+###################################
+#      Author: Maël Doré          #
+#  Contact: mael.dore@gmail.com   #
+###################################
+
 aggreg_prob = function(x, na.rm)
 { 
   # Case with all NA

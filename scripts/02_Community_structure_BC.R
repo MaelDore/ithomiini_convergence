@@ -1,5 +1,10 @@
 ##### Script 02: Community structure with Bray-Curtis indices on comimetic pairs of OMUs #####
 
+###################################
+#      Author: Maël Doré          #
+#  Contact: mael.dore@gmail.com   #
+###################################
+
 # Compute BC indices for all OMUs
 # Compute mean BC for mimics only and non-mimics only
 # Compute mean BC per mimicry rings
@@ -602,7 +607,7 @@ extract_OMU_name_and_pattern <- function(unit)
                                  ylab = "",                # Y-axis label
                                  x_axis_breaks = c(-3930, -2170, -420, 1500, 3050),            # X-axis tick breaks
                                  y_axis_breaks = c(-3650, -2450, -1220, 0, 1230, 2445),        # Y-axis tick breaks
-                                 x_axis_labels = c("120°E", "100°E", "80°E", "60°E", "40°E"),      # X-axis tick labels
+                                 x_axis_labels = c("120°W", "100°W", "80°W", "60°W", "40°W"),      # X-axis tick labels
                                  y_axis_labels = c("30°S", "20°S", "10°S", "0°", "10°N", "20°N"),  # Y-axis tick labels
                                  
                                  occ_cex = 0.5,         # Size of occurrences

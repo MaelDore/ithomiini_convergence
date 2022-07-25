@@ -1,3 +1,7 @@
+
+# Script from Adams, 2014: DOI = 10.1093/sysbio/syu030
+
+
 Test.Kmult<-function(x,phy,iter=999){
   library(ape)
   Kmult<-function(x,phy){

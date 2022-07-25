@@ -1,5 +1,10 @@
 ##### Script 03: Mantel tests for pairwise Ist ~ Dclim #####
 
+###################################
+#      Author: Maël Doré          #
+#  Contact: mael.dore@gmail.com   #
+###################################
+
 # Compute pairwise Ist, geographic distances and standardized climatic distances among all communities
 # Compute Mantel test for Ist ~ Dclim ; Ist ~ Dgeo ; Ist ~ Dclim + Dgeo
 # Plot scatter plot for Ist ~ Dclim using residuals from Ist ~ Dgeo
@@ -51,9 +56,9 @@ simpson <- function (x, na.rm) {
   return(y)
 }
 
-### 2/ Loop the analyses N times to show reproductibility ####
+### 2/ Loop the analyses N times to show reproducibility ####
 
-set.seed(seed = 54542) # Ensure reproductibility
+set.seed(seed = 54542) # Ensure reproducibility
 
 library(vegan)
 

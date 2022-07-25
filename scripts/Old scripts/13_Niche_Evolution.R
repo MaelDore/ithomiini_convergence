@@ -1,5 +1,10 @@
 ##### Convergence de l'?volution de la niche climatique chez les co-mimes #####
 
+###################################
+#      Author: Maël Doré          #
+#  Contact: mael.dore@gmail.com   #
+###################################
+
 ### Preparation ###
 
 # Effacer l'environnement

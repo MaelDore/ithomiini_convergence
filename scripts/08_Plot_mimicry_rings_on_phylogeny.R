@@ -1,5 +1,10 @@
 ##### Script SM: Plot mimicry rings on the phylogeny #####
 
+###################################
+#      Author: Maël Doré          #
+#  Contact: mael.dore@gmail.com   #
+###################################
+
 # Plot species phylogeny with associated mimicry membership table
 
 ### Input files

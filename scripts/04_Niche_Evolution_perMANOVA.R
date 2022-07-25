@@ -1,7 +1,11 @@
 ##### Script 04: perMANOVA to test association between climatic niches and mimicry rings without accounting for phylogeny #####
 
-# Test for association between climatic niches and mimicry rings without accounting for phylogeny
+###################################
+#      Author: Maël Doré          #
+#  Contact: mael.dore@gmail.com   #
+###################################
 
+# Test for association between climatic niches and mimicry rings without accounting for phylogeny
 
 ### Input files
 
@@ -100,7 +104,7 @@ save(reduced.list.unit_phyl_order, file = paste0("./outputs/Niche_evolution/redu
 
 load(file = paste0("./outputs/Niche_evolution/reduced.list.unit_phyl_order.RData"))
 
-# Reduce species list to the slected mimicry rings
+# Reduce species list to the selected mimicry rings
 reduced.list.sp <- list.sp[list.sp$Sp_full %in% reduced.list.unit_phyl_order$Sp_full, ]
 nrow(reduced.list.sp)
 

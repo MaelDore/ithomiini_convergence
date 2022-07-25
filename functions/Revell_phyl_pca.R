@@ -1,3 +1,12 @@
+
+###################################
+#      Author: Maël Doré          #
+#  Contact: mael.dore@gmail.com   #
+###################################
+
+# Script adapted from Revell, 2009: DOI = 10.1111/j.1558-5646.2009.00804.x
+
+
 Revell_phyl_pca <- function(C,X,mode) {
   # find out how many columns and taxa we have
   m <- ncol(X); n <- nrow(X);

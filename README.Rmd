@@ -25,7 +25,7 @@ __*DOI will be provided once the paper is online*__
 
    Müllerian mimicry, where defended prey species converge on similar warning signals, sharing the cost of educating predators, was first described nearly 150 years ago. However, the implications of this type of mutualism on large-scale biodiversity patterns and species niche evolution remain little explored. Here, we show that Müllerian mimicry is key to the maintenance of biodiversity in the c. 400 species of the Neotropical butterfly tribe Ithomiini. Mimicry drives strong spatial association among species and has channeled the convergence of their climatic niches. While shared climatic niches may limit community disassembly, highly adaptively-assembled communities tied by positive interactions remain particularly vulnerable to extinction cascades, where the loss of one species could result in the loss of its mutualistic partners.  
 
-All content is available [here](https://github.com/MaelDore/ithomiini_convergence).
+All content is available on [GitHub](https://github.com/MaelDore/ithomiini_convergence) and on [Zenodo](https://doi.org/10.5281/zenodo.6277769)   ([![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6277769.svg)](https://doi.org/10.5281/zenodo.6277769)).
 
 
 ## Contents

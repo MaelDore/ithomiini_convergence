@@ -26,8 +26,10 @@ interactions remain particularly vulnerable to extinction cascades,
 where the loss of one species could result in the loss of its
 mutualistic partners.
 
-All content is available
-[here](https://github.com/MaelDore/ithomiini_convergence).
+All content is available on
+[GitHub](https://github.com/MaelDore/ithomiini_convergence) and on
+[Zenodo](https://doi.org/10.5281/zenodo.6277769)
+([![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6277769.svg)](https://doi.org/10.5281/zenodo.6277769)).
 
 ## Contents
 

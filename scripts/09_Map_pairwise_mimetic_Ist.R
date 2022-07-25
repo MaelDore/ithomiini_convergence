@@ -1,5 +1,28 @@
 
-##### Script to map mimicry turnover with NMDS approach #####
+##### Script 09: Map mimicry turnover and climate beta-diversity with NMDS approach #####
+
+###################################
+#      Author: Maël Doré          #
+#  Contact: mael.dore@gmail.com   #
+###################################
+
+# Goal: Map mimicry turnover and climate beta-diversity with NMDS approach 
+
+### Input files
+
+# Binary range map
+# Ring richness stack
+# Borders shp files
+# RGB cube, mimicry turnover and climate PNG
+
+### Output files
+
+# Pairwise Ist matrix
+# Mimicry turnover map
+# Pairwise climatic distances
+# Climate beta-diversity map
+
+###
 
 # Clean environment
 rm(list = ls())

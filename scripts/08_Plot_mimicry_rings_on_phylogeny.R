@@ -1,4 +1,4 @@
-##### Script SM: Plot mimicry rings on the phylogeny #####
+##### Script 08: Plot mimicry rings on the phylogeny #####
 
 ###################################
 #      Author: Maël Doré          #
@@ -11,7 +11,6 @@
 
 # Summary table for species, including mimicry ring membership
 # Phylogeny of the Ithomiini (Chazot et al., 2019), with and without OMUs
-
 
 ### Output files
 

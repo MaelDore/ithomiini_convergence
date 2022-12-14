@@ -10,7 +10,6 @@ packages/*
 
 # Special folder for data that cannot be disclosed publically
 sensitive_data/*
-outputs/Niche_similarity/Hypervolumes/hypervolume*
 
 # Ignore certain types of files
 *.tif

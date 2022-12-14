@@ -280,7 +280,7 @@ build_hypervolume_gaussian_KDE_models(data = Ithomiini_dataset_with_env_data, # 
 ### 3.3/ Explore hypervolume output ####
 
 # Load
-hypervolume_output <- readRDS(file = "./outputs/Niche_similarity/Hypervolumes/hypervolume_Aeria_eurimedia_EURIMEDIA_gaussianKBE_0.95_probability.rds")
+hypervolume_output <- readRDS(file = "./outputs/Niche_similarity/Hypervolumes/hypervolume_Aeria_eurimedia_EURIMEDIA_gaussianKBE_1_probability.rds")
 
 plot(hypervolume_output)
 

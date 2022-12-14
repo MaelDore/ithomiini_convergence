@@ -1,0 +1,3 @@
+"";"Dclim_mean";"Dclim_sd";"Dclim_CV";"Dclim_2.5";"Dclim_97.5";"Dclim_min";"Dclim_max";"Dgeo_mean";"Dgeo_sd";"Dgeo_CV";"Dgeo_2.5";"Dgeo_97.5";"Dgeo_min";"Dgeo_max";"Dclim_geo_mean";"Dclim_geo_sd";"Dclim_geo_CV";"Dclim_geo_2.5";"Dclim_geo_97.5";"Dclim_geo_min";"Dclim_geo_max"
+"beta_coef";0,382;0,02;5,4;0,344;0,418;0,336;0,447;0,632;0,02;4,6;0,583;0,693;0,567;0,712;0,216;0,027;12,4;0,165;0,27;0,161;0,283
+"p_values";0,001;0;0;0,001;0,001;0,001;0,001;0,001;0;0;0,001;0,001;0,001;0,001;0,001;0;0;0,001;0,001;0,001;0,001

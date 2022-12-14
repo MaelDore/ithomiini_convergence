@@ -1,4 +1,4 @@
-##### Script 03: Mantel tests for pairwise Ist ~ Dclim #####
+##### Script 03: Mantel and MRM tests for pairwise Ist ~ Dclim #####
 
 ###################################
 #      Author: Maël Doré          #
@@ -6,8 +6,9 @@
 ###################################
 
 # Compute pairwise Ist, geographic distances and standardized climatic distances among all communities
-# Compute Mantel test for Ist ~ Dclim ; Ist ~ Dgeo ; Ist ~ Dclim + Dgeo
+# Compute Mantel tests for Ist ~ Dclim ; Ist ~ Dgeo ; Ist ~ Dclim + Dgeo
 # Plot scatter plot for Ist ~ Dclim using residuals from Ist ~ Dgeo
+# Compute MRM tests for Ist ~ Dclim ; Ist ~ Dgeo ; Ist ~ Dclim + Dgeo
 
 
 ### Input files
@@ -23,9 +24,11 @@
 # Mantel test for Ist ~ Dclim ; Ist ~ Dgeo ; Ist ~ Dclim + Dgeo
 # Associated plot of null distri for each
 # Scatter plot for Ist ~ Dclim using residuals from Ist ~ Dgeo
+# MRM tests for Ist ~ Dclim ; Ist ~ Dgeo ; Ist ~ Dclim + Dgeo
+# Summary tables of 100 replicates for each test
 
 
-# Effacer l'environnement
+# Clean environment
 rm(list = ls())
 
 ### 1/ Load directly the mimicry ring richness brick ####
@@ -39,7 +42,7 @@ ring_richness_brick <- ring_richness_stack*1 # Transform into brick format to ge
 ring_richness_df <- ring_richness_brick[] # Extract unique df of communities x ring richness
 
 # Load climate stack
-env_stack <- readRDS(file = "./input_data/Select_env_15.rds")
+env_stack <- readRDS(file = "./input_data/Env_data/Select_env_15.rds")
 climate_stack <- subset(env_stack, 1:4)
 names(climate_stack) <- c("Tmean", "Tvar", "Htot", "Hvar")
 
@@ -274,7 +277,7 @@ pairwise_climdist_vec <- as.dist(pairwise_climdist)[which(!is.na(as.dist(pairwis
 pairwise_geodist_vec <- as.dist(pairwise_geodist)[which(!is.na(as.dist(pairwise_Ist)))]
 
 # Extract only 1000 pairwise distances for the plot to make it readable
-set.seed(seed = 55644) # Ensure reproductibility
+set.seed(seed = 55644) # Ensure reproducibility
 sample_indices <- sample(x= seq_along(pairwise_Ist_vec), size = 1000, replace = F)
 save(sample_indices, file = "./outputs/Community_structure/Mantel_tests/sample_indices.RData")
 
@@ -491,7 +494,7 @@ par(oma = original_ext_margins, mar = original_int_margins, mfrow = c(1,1))
 dev.off()
 
 
-##### 5/ Replicates analysis #####
+##### 5/ Summary table for replicate analysis of Mantel tests #####
 
 ### Retrieve results from other replicates and compute summary stats
 
@@ -552,6 +555,585 @@ row.names(all_summary) <- c("Spearman_rho", "p_values")
 
 write.csv2(x = all_summary, file = "./tables/Mantel_tests_summary.csv")
 
+
+
+##### 6/ Multiple Regression on Distance Matrices #####
+
+# Use Multiple Regression on Distance Matrices (MRM) instead of (partial) Mantel tests
+
+library(ecodist)
+?ecodist::MRM
+
+# Load home-made function which can provide summary of permutation outputs
+source("./functions/MRM_verbose.R")
+
+### 6.1/ Load and prepare pairwise dissimilarity data ####
+
+load(file = "./outputs/Community_structure/Mantel_tests/Pairwise_values.RData")
+
+# Extract vectors of distances, without replicates and NA
+# Need to remove all column/row if NA detected
+
+# Remove communities with all NaN
+NaN_test <- apply(X = pairwise_Ist, MARGIN = 1, FUN = function(x) { all(is.nan(x)) })
+pairwise_Ist_no_NaN <- pairwise_Ist[!NaN_test, !NaN_test]
+pairwise_climdist_no_NaN <- pairwise_climdist[!NaN_test, !NaN_test]
+pairwise_geodist_no_NaN <- pairwise_geodist[!NaN_test, !NaN_test]
+
+# Remove communities with at least one NaN
+diag(pairwise_Ist_no_NaN) <- diag(pairwise_climdist_no_NaN) <- diag(pairwise_geodist_no_NaN) <- 0
+NaN_test_unique <- apply(X = pairwise_Ist_no_NaN, MARGIN = 1, FUN = function(x) { any(is.nan(x)) })
+pairwise_Ist_no_NaN <- pairwise_Ist_no_NaN[!NaN_test_unique, !NaN_test_unique]
+pairwise_climdist_no_NaN <- pairwise_climdist_no_NaN[!NaN_test_unique, !NaN_test_unique]
+pairwise_geodist_no_NaN <- pairwise_geodist_no_NaN[!NaN_test_unique, !NaN_test_unique]
+
+# Linearize dissimilarities in vectors (need to be in vectors due to conflict with spdep package)
+pairwise_Ist_vec <- as.vector(as.dist(pairwise_Ist_no_NaN)[which(!is.na(as.dist(pairwise_Ist_no_NaN)))])
+pairwise_climdist_vec <- as.vector(as.dist(pairwise_climdist_no_NaN)[which(!is.na(as.dist(pairwise_Ist_no_NaN)))])
+pairwise_geodist_vec <- as.vector(as.dist(pairwise_geodist_no_NaN)[which(!is.na(as.dist(pairwise_Ist_no_NaN)))])
+
+# Use standardized data so the coefficients are comparable beta-coefficients
+pairwise_Ist_vec <- scale(pairwise_Ist_vec, center = TRUE, scale = TRUE)
+pairwise_climdist_vec <- scale(pairwise_climdist_vec, center = TRUE, scale = TRUE)
+pairwise_geodist_vec <- scale(pairwise_geodist_vec, center = TRUE, scale = TRUE)
+
+
+### 6.2/ Run Multiple Regression on Distance Matrices (MRM) ####
+
+set.seed(seed = 1)
+
+## MRM: Ist ~ clim
+MRM_ranks_Ist_clim <- MRM_verbose(formula = pairwise_Ist_vec ~ pairwise_climdist_vec,
+                                  nperm = 1000,
+                                  method = "linear", # To use Linear Model with normal distribution assumed for the conditional response variable
+                                  mrank = TRUE,  # Transform data in ranks
+                                  perm_output = TRUE)  # Provide permutation outputs
+
+print(MRM_ranks_Ist_clim)
+print(MRM_ranks_Ist_clim$coef)
+print(MRM_ranks_Ist_clim$r.squared)
+print(MRM_ranks_Ist_clim$F.test)
+
+# Beta coef for climate = 0.367, mean NULL = 0.000, Q95% = 0.023, p-value ≤ 0.001
+
+saveRDS(MRM_ranks_Ist_clim, file = paste0("./outputs/Community_structure/MRM_tests/MRM_ranks_Ist_clim.RData"))
+
+
+## MRM: Ist ~ geo
+MRM_ranks_Ist_geo <- MRM_verbose(formula = pairwise_Ist_vec ~ pairwise_geodist_vec,
+                                 nperm = 1000,
+                                 method = "linear", # To use Linear Model with normal distribution assumed for the conditional response variable
+                                 mrank = TRUE, # Transform data in ranks
+                                 perm_output = TRUE)  # Provide permutation outputs
+
+print(MRM_ranks_Ist_geo)
+print(MRM_ranks_Ist_geo$coef)
+print(MRM_ranks_Ist_geo$r.squared)
+print(MRM_ranks_Ist_geo$F.test)
+
+# Beta coef for geo = 0.598, mean NULL = 0.000, Q95% = 0.024, p-value ≤ 0.001
+
+saveRDS(MRM_ranks_Ist_geo, file = paste0("./outputs/Community_structure/MRM_tests/MRM_ranks_Ist_geo.RData"))
+
+
+## MRM: Ist ~ clim + geo
+MRM_ranks_Ist_clim_geo <- MRM_verbose(formula = pairwise_Ist_vec ~ pairwise_climdist_vec + pairwise_geodist_vec,
+                                      nperm = 1000,
+                                      method = "linear", # To use Linear Model with normal distribution assumed for the conditional response variable
+                                      mrank = TRUE, # Transform data in ranks
+                                      perm_output = TRUE)  # Provide permutation outputs
+
+print(MRM_ranks_Ist_clim_geo)
+print(MRM_ranks_Ist_clim_geo$coef)
+
+# Beta coef for climate = 0.216, mean NULL = 0.001, Q95% = 0.027, p-value ≤ 0.001
+# Beta coef for geo = 0.530, mean NULL = 0.000, Q95% = 0.031, p-value ≤ 0.001
+
+saveRDS(MRM_ranks_Ist_clim_geo, file = paste0("./outputs/Community_structure/MRM_tests/MRM_ranks_Ist_clim_geo.RData"))
+
+
+### Add those coefficients in Figure 4 and summary in the main text ####
+
+
+### 6.3/ Run 100 replicates for reproducibility ###
+
+### Use the same set of 100 replicates from Mantel tests
+
+iterations <- 100
+
+# Build summary df to save all results
+MRM_summary_df <- matrix(nrow = iterations, ncol = 6)
+MRM_summary_df <- data.frame(MRM_summary_df)
+names(MRM_summary_df) <- c("Dclim_beta", "Dclim_p_value", "Dgeo_beta", "Dgeo_p_value", "Dclim_geo_beta", "Dclim_geo_p_value")
+
+set.seed(seed = 54542) # Ensure reproducibility
+
+for (k in 1:iterations) 
+{
+  # k <- 1
+  
+  ### 6.3.1/ Load and prepare pairwise distances for this iteration ####
+
+  load(file = paste0("./outputs/Community_structure/Mantel_tests/Iterations/Pairwise_values_",k,".RData"))
+
+  # Remove communities with all NaN
+  NaN_test <- apply(X = pairwise_Ist, MARGIN = 1, FUN = function(x) { all(is.nan(x)) })
+  pairwise_Ist_no_NaN <- pairwise_Ist[!NaN_test, !NaN_test]
+  pairwise_climdist_no_NaN <- pairwise_climdist[!NaN_test, !NaN_test]
+  pairwise_geodist_no_NaN <- pairwise_geodist[!NaN_test, !NaN_test]
+
+  # Remove communities with at least one NaN
+  diag(pairwise_Ist_no_NaN) <- diag(pairwise_climdist_no_NaN) <- diag(pairwise_geodist_no_NaN) <- 0
+  NaN_test_unique <- apply(X = pairwise_Ist_no_NaN, MARGIN = 1, FUN = function(x) { any(is.nan(x)) })
+  pairwise_Ist_no_NaN <- pairwise_Ist_no_NaN[!NaN_test_unique, !NaN_test_unique]
+  pairwise_climdist_no_NaN <- pairwise_climdist_no_NaN[!NaN_test_unique, !NaN_test_unique]
+  pairwise_geodist_no_NaN <- pairwise_geodist_no_NaN[!NaN_test_unique, !NaN_test_unique]
+
+  # Linearize dissimilarities in vectors (need to be in vectors due to conflict with spdep package)
+  pairwise_Ist_vec <- as.vector(as.dist(pairwise_Ist_no_NaN)[which(!is.na(as.dist(pairwise_Ist_no_NaN)))])
+  pairwise_climdist_vec <- as.vector(as.dist(pairwise_climdist_no_NaN)[which(!is.na(as.dist(pairwise_Ist_no_NaN)))])
+  pairwise_geodist_vec <- as.vector(as.dist(pairwise_geodist_no_NaN)[which(!is.na(as.dist(pairwise_Ist_no_NaN)))])
+
+  # Use standardized data so the coefficients are comparable beta-coefficients
+  pairwise_Ist_vec <- scale(pairwise_Ist_vec, center = TRUE, scale = TRUE)
+  pairwise_climdist_vec <- scale(pairwise_climdist_vec, center = TRUE, scale = TRUE)
+  pairwise_geodist_vec <- scale(pairwise_geodist_vec, center = TRUE, scale = TRUE)
+
+  ### 6.3.2/ Run MRM for this iteration ####
+
+  ## MRM: Ist ~ clim
+  MRM_ranks_Ist_clim_k <- MRM_verbose(formula = pairwise_Ist_vec ~ pairwise_climdist_vec,
+                                      nperm = 1000,
+                                      method = "linear", # To use Linear Model with normal distribution assumed for the conditional response variable
+                                      mrank = TRUE,  # Transform data in ranks
+                                      perm_output = TRUE)  # Provide permutation outputs
+
+  saveRDS(MRM_ranks_Ist_clim_k, file = paste0("./outputs/Community_structure/MRM_tests/Iterations/Resultats_MRM_ranks_Ist_clim_",k,".rds"))
+
+  # cat("Ist ~ clim - Ok")
+
+  ## MRM: Ist ~ geo
+  MRM_ranks_Ist_geo_k <- MRM_verbose(formula = pairwise_Ist_vec ~ pairwise_geodist_vec,
+                                    nperm = 1000,
+                                    method = "linear", # To use Linear Model with normal distribution assumed for the conditional response variable
+                                    mrank = TRUE,  # Transform data in ranks
+                                    perm_output = TRUE)  # Provide permutation outputs
+
+  saveRDS(MRM_ranks_Ist_geo_k, file = paste0("./outputs/Community_structure/MRM_tests/Iterations/Resultats_MRM_ranks_Ist_geo_",k,".rds"))
+
+  # cat("Ist ~ geo - Ok")
+
+  ## MRM: Ist ~ clim + geo
+  MRM_ranks_Ist_clim_geo_k <- MRM_verbose(formula = pairwise_Ist_vec ~ pairwise_climdist_vec + pairwise_geodist_vec,
+                                          nperm = 1000,
+                                          method = "linear", # To use Linear Model with normal distribution assumed for the conditional response variable
+                                          mrank = TRUE,  # Transform data in ranks
+                                          perm_output = TRUE)  # Provide permutation outputs
+
+  saveRDS(MRM_ranks_Ist_clim_geo_k, file = paste0("./outputs/Community_structure/MRM_tests/Iterations/Resultats_MRM_ranks_Ist_clim_geo_",k,".rds"))
+
+  # cat("Ist ~ clim + geo - Ok")
+  
+  ### 6.3.3/ Save statistics in summary df ####
+  
+  # MRM_ranks_Ist_clim_k <- readRDS(file = paste0("./outputs/Community_structure/MRM_tests/Iterations/Resultats_MRM_ranks_Ist_clim_",k,".rds"))
+  # MRM_ranks_Ist_geo_k <- readRDS(file = paste0("./outputs/Community_structure/MRM_tests/Iterations/Resultats_MRM_ranks_Ist_geo_",k,".rds"))
+  # MRM_ranks_Ist_clim_geo_k <- readRDS(file = paste0("./outputs/Community_structure/MRM_tests/Iterations/Resultats_MRM_ranks_Ist_clim_geo_",k,".rds"))
+  
+  MRM_summary_df$Dclim_beta[k] <- round(MRM_ranks_Ist_clim_k$coef[2, 1], 3)
+  MRM_summary_df$Dclim_p_value[k] <- round(MRM_ranks_Ist_clim_k$coef[2, 4], 3)
+  MRM_summary_df$Dgeo_beta[k] <- round(MRM_ranks_Ist_geo_k$coef[2, 1], 3)
+  MRM_summary_df$Dgeo_p_value[k] <- round(MRM_ranks_Ist_geo_k$coef[2, 4], 3)
+  MRM_summary_df$Dclim_geo_beta[k] <- round(MRM_ranks_Ist_clim_geo_k$coef[2, 1], 3)
+  MRM_summary_df$Dclim_geo_p_value[k] <- round(MRM_ranks_Ist_clim_geo_k$coef[2, 4], 3)
+  
+  save(MRM_summary_df, file = paste0("./outputs/Community_structure/MRM_tests/MRM_summary_df.RData"))
+  
+  cat(paste0("\n", Sys.time()," ------ Process over for ",k,"/",iterations," iterations ------\n"))
+  
+}
+
+
+##### 7/ Summary table for replicate analysis of Mantel tests #####
+
+### Retrieve results from other replicates and compute summary stats
+
+load(file = paste0("./outputs/Community_structure/MRM_tests/MRM_summary_df.RData"))
+
+library(dplyr)
+
+beta_summary <- MRM_summary_df %>%
+  summarize(
+    Dclim_mean = round(mean(Dclim_beta), 3),
+    Dclim_sd = round(sd(Dclim_beta), 3),
+    Dclim_CV = round(sd(Dclim_beta)/mean(Dclim_beta)*100, 1),
+    Dclim_2.5 = round(quantile(Dclim_beta, probs = 0.025), 3),
+    Dclim_97.5 = round(quantile(Dclim_beta, probs = 0.975), 3),
+    Dclim_min = round(min(Dclim_beta), 3),
+    Dclim_max = round(max(Dclim_beta), 3),
+    Dgeo_mean = round(mean(Dgeo_beta), 3),
+    Dgeo_sd = round(sd(Dclim_beta), 3),
+    Dgeo_CV = round(sd(Dgeo_beta)/mean(Dgeo_beta)*100, 1),
+    Dgeo_2.5 = round(quantile(Dgeo_beta, probs = 0.025), 3),
+    Dgeo_97.5 = round(quantile(Dgeo_beta, probs = 0.975), 3),
+    Dgeo_min = round(min(Dgeo_beta), 3),
+    Dgeo_max = round(max(Dgeo_beta), 3),
+    Dclim_geo_mean = round(mean(Dclim_geo_beta), 3),
+    Dclim_geo_sd = round(sd(Dclim_geo_beta), 3),
+    Dclim_geo_CV = round(sd(Dclim_geo_beta)/mean(Dclim_geo_beta)*100, 1),
+    Dclim_geo_2.5 = round(quantile(Dclim_geo_beta, probs = 0.025), 3),
+    Dclim_geo_97.5 = round(quantile(Dclim_geo_beta, probs = 0.975), 3),
+    Dclim_geo_min = round(min(Dclim_geo_beta), 3),
+    Dclim_geo_max = round(max(Dclim_geo_beta), 3))
+
+p_summary <- MRM_summary_df %>%
+  summarize(
+    Dclim_mean = round(mean(Dclim_p_value), 3),
+    Dclim_sd = round(sd(Dclim_p_value), 3),
+    Dclim_CV = round(sd(Dclim_p_value)/mean(Dclim_p_value)*100, 1),
+    Dclim_2.5 = round(quantile(Dclim_p_value, probs = 0.025), 3),
+    Dclim_97.5 = round(quantile(Dclim_p_value, probs = 0.975), 3),
+    Dclim_min = round(min(Dclim_p_value), 3),
+    Dclim_max = round(max(Dclim_p_value), 3),
+    Dgeo_mean = round(mean(Dgeo_p_value), 3),
+    Dgeo_sd = round(sd(Dclim_p_value), 3),
+    Dgeo_CV = round(sd(Dgeo_p_value)/mean(Dgeo_p_value)*100, 1),
+    Dgeo_2.5 = round(quantile(Dgeo_p_value, probs = 0.025), 3),
+    Dgeo_97.5 = round(quantile(Dgeo_p_value, probs = 0.975), 3),
+    Dgeo_min = round(min(Dgeo_p_value), 3),
+    Dgeo_max = round(max(Dgeo_p_value), 3),
+    Dclim_geo_mean = round(mean(Dclim_geo_p_value), 3),
+    Dclim_geo_sd = round(sd(Dclim_geo_p_value), 3),
+    Dclim_geo_CV = round(sd(Dclim_geo_p_value)/mean(Dclim_geo_p_value)*100, 1),
+    Dclim_geo_2.5 = round(quantile(Dclim_geo_p_value, probs = 0.025), 3),
+    Dclim_geo_97.5 = round(quantile(Dclim_geo_p_value, probs = 0.975), 3),
+    Dclim_geo_min = round(min(Dclim_geo_p_value), 3),
+    Dclim_geo_max = round(max(Dclim_geo_p_value), 3))
+
+MRM_all_summary <- rbind(beta_summary, p_summary)
+row.names(MRM_all_summary) <- c("beta_coef", "p_values")
+
+write.csv2(x = MRM_all_summary, file = "./tables/MRM_tests_summary.csv")
+
+
+### 8/ Use MRM to account for phylogenetic betadiversity across community ####
+
+### 8.1/ Extract OMUs x community matrix for a subset of communities ####
+
+# Load ithomiini phylogeny
+Ithomiini_phylogeny <- readRDS("./input_data/Phylogenies/Final_phylogeny_with_updated_names.rds")
+
+# Load the species proba stack
+species_proba_stack <- readRDS(file = paste0("./input_data/SDM_stacks/All_sp_proba_stack_Jaccard.80.rds"))
+species_proba_brick <- species_proba_stack*1 # Transform into brick format to get a unique df for data
+species_proba_df <- species_proba_brick[] # Extract unique df of communities x ring richness
+
+# Compute the species richness raster
+library(raster)
+species_richness_raster <- raster::calc(x = species_proba_stack, fun = sum, na.rm = T)
+species_richness_brick <- brick(species_richness_raster)
+species_richness_df <- species_richness_brick[] 
+
+# Subsample communities
+subsampling <- 1000
+
+sample.index <- sample(x = which(!is.na(ring_richness_stack[[1]]@data@values)), size = subsampling, replace = F)
+
+# Subsample the species data
+sampled_species_proba <- species_proba_df[sample.index,]
+sampled_species_richness <- species_richness_df[sample.index,]
+
+# table(sampled_species_richness)
+
+### Transform species proba into incidence matrix by picking the nth most likely species for each community according to its richness prediction
+
+# Rank species probability of presence in each community
+sampled_species_ranks <- t(apply(X = (1 - sampled_species_proba), MARGIN = 1, FUN = rank, ties.method = "random"))
+
+sampled_species_incidence <- sampled_species_ranks
+
+# Loop per community
+for (i in 1:nrow(sampled_species_ranks)) 
+{
+  # i <- 1
+  
+  # Extract ranks and richness
+  com_ranks <- sampled_species_ranks[i, ]
+  com_richness <- round(sampled_species_richness[i], 0)
+  
+  # Transform into incidence matrix
+  com_incidence <- com_ranks
+  com_incidence[com_ranks > com_richness] <- 0  # Set to zero all species unlikely to be present
+  com_incidence[com_ranks <= com_richness] <- 1 # Set to one all species likely to be present
+  
+  # Paste into incidence matrix
+  sampled_species_incidence[i, ] <- com_incidence
+  
+}
+
+
+### 8.2/ Compute Baselga's phylobetadiverity turnover (Sorensen) ####
+
+library(betapart)
+
+source(file = "./functions/compute_pairwise_betadiversity.R")
+
+pairwise_BPD <- compute_pairwise_betadiversity(regional_data = sampled_species_incidence,
+                                               diversity_type = "phylo", # "taxo" or "phylo"
+                                               phylo = Ithomiini_phylogeny,
+                                               index_family = "sorensen", # "jaccard" or "sorensen"
+                                               beta_part = "turnover") # "total", "nestedness" or "turnover"
+
+saveRDS(pairwise_BPD, file = paste0("./outputs/Community_structure/MRM_tests/pairwise_BPD.RData"))
+
+
+### 8.3/ Compute Hardy's Pst ####
+
+# Other option to quantify phylogenetic turnover = Hardy's Pst
+
+
+### 8.4/ Run MRM with phylobetadiversity (PBD) ####
+
+load(file = "./outputs/Community_structure/Mantel_tests/Pairwise_values.RData")
+
+# Extract vectors of distances, without replicates and NA
+# Need to remove all column/row if NA detected
+
+# Remove communities with all NaN
+NaN_test <- apply(X = pairwise_Ist, MARGIN = 1, FUN = function(x) { all(is.nan(x)) })
+pairwise_Ist_no_NaN <- pairwise_Ist[!NaN_test, !NaN_test]
+pairwise_climdist_no_NaN <- pairwise_climdist[!NaN_test, !NaN_test]
+pairwise_geodist_no_NaN <- pairwise_geodist[!NaN_test, !NaN_test]
+pairwise_BPD_no_NaN <- pairwise_BPD[!NaN_test, !NaN_test]
+
+# Remove communities with at least one NaN
+diag(pairwise_Ist_no_NaN) <- diag(pairwise_climdist_no_NaN) <- diag(pairwise_geodist_no_NaN) <- 0
+NaN_test_unique <- apply(X = pairwise_Ist_no_NaN, MARGIN = 1, FUN = function(x) { any(is.nan(x)) })
+pairwise_Ist_no_NaN <- pairwise_Ist_no_NaN[!NaN_test_unique, !NaN_test_unique]
+pairwise_climdist_no_NaN <- pairwise_climdist_no_NaN[!NaN_test_unique, !NaN_test_unique]
+pairwise_geodist_no_NaN <- pairwise_geodist_no_NaN[!NaN_test_unique, !NaN_test_unique]
+pairwise_BPD_no_NaN <- pairwise_BPD_no_NaN[!NaN_test_unique, !NaN_test_unique]
+
+# Linearize dissimilarities in vectors (need to be in vectors due to conflict with spdep package)
+pairwise_Ist_vec <- as.vector(as.dist(pairwise_Ist_no_NaN)[which(!is.na(as.dist(pairwise_Ist_no_NaN)))])
+pairwise_climdist_vec <- as.vector(as.dist(pairwise_climdist_no_NaN)[which(!is.na(as.dist(pairwise_Ist_no_NaN)))])
+pairwise_geodist_vec <- as.vector(as.dist(pairwise_geodist_no_NaN)[which(!is.na(as.dist(pairwise_Ist_no_NaN)))])
+pairwise_BPD_vec <- as.vector(as.dist(pairwise_BPD_no_NaN)[which(!is.na(as.dist(pairwise_Ist_no_NaN)))])
+
+# # Use standardized data so the coefficients are comparable beta-coefficients
+# pairwise_Ist_vec <- scale(pairwise_Ist_vec, center = TRUE, scale = TRUE)
+# pairwise_climdist_vec <- scale(pairwise_climdist_vec, center = TRUE, scale = TRUE)
+# pairwise_geodist_vec <- scale(pairwise_geodist_vec, center = TRUE, scale = TRUE)
+# pairwise_BPD_vec <- scale(pairwise_BPD_vec, center = TRUE, scale = TRUE)
+
+
+## MRM: Ist ~ clim + geo + Baselga's PBD
+MRM_ranks_Ist_clim_geo_phylo <- MRM_verbose(formula = pairwise_Ist_vec ~ pairwise_climdist_vec + pairwise_geodist_vec + pairwise_BPD_vec,
+                                      nperm = 1000,
+                                      method = "linear", # To use Linear Model with normal distribution assumed for the conditional response variable
+                                      mrank = TRUE, # Transform data in ranks
+                                      perm_output = TRUE)  # Provide permutation outputs
+
+print(MRM_ranks_Ist_clim_geo_phylo)
+print(MRM_ranks_Ist_clim_geo_phylo$coef)
+
+# Beta coef for climate = 0.193, mean NULL = 0.000, Q95% = 0.031, p-value ≤ 0.001
+# Beta coef for geo = 0.551, mean NULL = 0.000, Q95% = 0.023, p-value ≤ 0.001
+# Beta coef for PBD = -0.009, mean NULL = 0.000, Q95% = 0.023, p-value = 0.545
+
+saveRDS(MRM_ranks_Ist_clim_geo_phylo, file = paste0("./outputs/Community_structure/MRM_tests/MRM_ranks_Ist_clim_geo_phylo.RData"))
+
+### Report summary for Ist ~ Clim + Geo + Phylo
+
+### Run also with Pst
+
+### Look at correlation between Pst and PBD
+
+
+### 8.5/ Plot histograms of the MRM tests ####
+
+library(tidyverse)
+
+test <- MRM_ranks_Ist_clim_geo_phylo
+factor = "BPD"
+title = "test"
+
+### Function to plot histogram of null distribution of Spearman's rho during permutation test
+plot_histogram_MRM_test <- function(test, factor,
+                                    title, cex_title = 1.3,
+                                    cex_axis = 1.5, cex_lab = 1.6, cex_legend = 1.4,
+                                    arrow_btm, arrow_top, arrow_adjust,
+                                    panel_letter = "", cex_panel_letter = 2.0)
+{
+  # Identify factor index
+  factor_index <- str_which(string = row.names(test$coef), pattern = factor)
+  
+  # Extract beta stats and p-value
+  beta_value <- test$coef[factor_index,1]
+  p_value <- test$coef[factor_index,4]
+  
+  # Extract null distribution
+  null_distri <- test$permutations$b.perm[, factor_index]
+  
+  hist(null_distri,
+       breaks = 30, freq = TRUE, col = "gray", 
+       main = title, 
+       xlab = expression(paste("Regression's ", beta, "-coefficients", sep = "")),
+       cex.axis = cex_axis, cex.lab = cex_lab, cex.main = cex_title, lwd = 2)
+  arrows(x0 = beta_value + arrow_adjust, y0 = arrow_top, x1 = beta_value + arrow_adjust, y1 = arrow_btm, length = 0.1, lwd = 3)
+  abline(v = mean(null_distri), lty = 2, lwd = 2)
+  abline(v = quantile(null_distri, 0.95), lty = 2, lwd = 2, col = "red")
+  
+  # Insert quantiles legend
+  legend(legend = c(paste("Mean = 0.000"), 
+                    paste0("Q95% = ", format(round(quantile(null_distri, 0.95),3), nsmall = 3))), 
+         x = "topright", inset = c(0.02, 0.20), y.intersp = 1.2, lty = 2 , lwd = 2, col = c("black", "red"), cex = cex_legend, bty ="n")
+  
+  # Insert beta value legend
+  legend(legend = bquote(bold(beta) ~ bold('obs =') ~ bold(.(format(round(beta_value, 3), nsmall = 3)))), text.font = 2,
+         x = "bottomright", inset = c(0.02, 0.41), xjust = 1, # Use inset to manually adjust position
+         cex = cex_legend, bty = "n", bg = "white", box.col = NA)
+  
+  # Insert p-value legend
+  legend(legend = c(paste0("p = ",p_value)), text.font = 2,
+         x = "bottomright", inset = c(0.02, 0.35), xjust = 1, # Use inset to manually adjust position
+         cex = cex_legend, bty = "n", bg = "white", box.col = NA)
+  
+  # Add panel legend
+  legend(legend = panel_letter, text.font = 2,
+         x = "topright", inset = c(0.00, 0.00), xjust = 0.5,
+         cex = cex_panel_letter, bty ="n")
+  
+}
+
+
+### Panel A/ Effect of Climate
+
+pdf(file = paste0("./graphs/Community_Structure/MRM_Ist_Clim_null_distri.pdf"), height = 6, width = 7)
+
+original_int_margins <- par()$mar
+par(mar = c(5.1,5,4.1,2.1))
+
+plot_histogram_MRM_test(test = MRM_ranks_Ist_clim_geo_phylo,
+                        factor = "clim",
+                        title = "MRM: Ist ~ Clim + Geo + Phylo\nClimate effect",
+                        cex_title = 1.5, cex_axis = 1.3, cex_lab = 1.4,
+                        arrow_btm = 5, arrow_top = 70, arrow_adjust = 0.000,
+                        panel_letter = "A")
+
+par(mar = original_int_margins)
+
+dev.off()
+
+### Panel B/ Effect of Geography
+
+pdf(file = paste0("./graphs/Community_Structure/MRM_Ist_Geo_null_distri.pdf"), height = 6, width = 7)
+
+original_int_margins <- par()$mar
+par(mar = c(5.1,5,4.1,2.1))
+
+plot_histogram_MRM_test(test = MRM_ranks_Ist_clim_geo_phylo,
+                        factor = "geo",
+                        title = "MRM: Ist ~ Clim + Geo + Phylo\nGeography effect",
+                        cex_title = 1.5, cex_axis = 1.3, cex_lab = 1.4,
+                        arrow_btm = 5, arrow_top = 70, arrow_adjust = 0.000,
+                        panel_letter = "B")
+
+par(mar = original_int_margins)
+
+dev.off()
+
+
+### Panel C/ Effect of Phylogeny
+
+pdf(file = paste0("./graphs/Community_Structure/MRM_Ist_BPD_null_distri.pdf"), height = 6, width = 7)
+
+original_int_margins <- par()$mar
+par(mar = c(5.1,5,4.1,2.1))
+
+plot_histogram_MRM_test(test = MRM_ranks_Ist_clim_geo_phylo,
+                        factor = "BPD",
+                        title = "MRM: Ist ~ Clim + Geo + Phylo\nPhylogeny effect",
+                        cex_title = 1.5, cex_axis = 1.3, cex_lab = 1.4,
+                        arrow_btm = 5, arrow_top = 70, arrow_adjust = 0.000,
+                        panel_letter = "C")
+
+par(mar = original_int_margins)
+
+dev.off()
+
+
+### 8.6/ Plot Mimicry Ist vs. PBD ####
+
+# Function to plot scatterplot of pairwise distances
+plot_pairwise_distances_with_MRM <- function(title, cex_title = 1.3,
+                                             y, x, y_lab, x_lab,
+                                             y_lim = NULL,
+                                             cex_axis = 1.5, cex_lab = 1.6, cex_legend = 1.4,
+                                             beta_value, p_value, regression,
+                                             panel_letter = "", cex_panel_letter = 2.0)
+{
+  plot(x = x, y = y, 
+       ylim = y_lim,
+       main = title, ylab = y_lab, xlab = x_lab,
+       cex.axis = cex_axis, cex.lab = cex_lab, cex.main = cex_title, lwd = 1, type = "n", axes = F)
+  
+  points(x = x, y = y, pch = 16, col = "#00000070")
+  
+  # Insert blank
+  legend(legend = c("              ",
+                    "              "),
+         x = "topleft", inset = c(0, 0.02), xjust = 1, y.intersp = 1.1, # Use inset to manually adjust position
+         cex = cex_legend, bty = "o", bg = "white", box.col = NA)
+  
+  # Insert beta value legend
+  legend(legend = bquote(bold(beta) ~ bold('=') ~ bold(.(beta_value))), text.font = 2,
+         x = "topleft", inset = c(-0.01, 0.02), xjust = 1, # Use inset to manually adjust position
+         cex = cex_legend, bty = "n", bg = "white", box.col = NA)
+  
+  # Insert p-value legend
+  legend(legend = c("",paste0("p = ",p_value)), text.font = 2,
+         x = "topleft", inset = c(-0.01, 0.02), xjust = 1, # Use inset to manually adjust position
+         cex = cex_legend, bty = "n", bg = "white", box.col = NA)
+  
+  axis(side = 1, lwd = 2, cex.axis = cex_axis)
+  axis(side = 2, lwd = 2, cex.axis = cex_axis)
+  abline(regression, lwd = 3, col = "red")
+  
+  # Add panel legend
+  legend(legend = panel_letter, text.font = 2,
+         x = "topright", inset = c(0.00, 0.03), xjust = 0.5,
+         cex = cex_panel_letter, bty ="n")
+  
+}
+
+
+load(file = "./outputs/Community_structure/Mantel_tests/sample_indices.RData")
+
+# Extract stats for legend
+beta_value <- format(round(MRM_ranks_Ist_clim_geo_phylo$coef[4,1], 3), nsmall = 3)
+p_value <- format(MRM_ranks_Ist_clim_geo_phylo$coef[4,4], nsmall = 3)
+
+# Compute a linear regression to get coefficients to draw a predict line
+reg_PBD <- lm(pairwise_Ist_vec ~ pairwise_BPD_vec)
+summary(reg_PBD)
+
+# Plot
+pdf(file = paste0("./graphs/Community_Structure/Ist_PBD.pdf"), height = 6, width = 7)
+
+original_ext_margins <- par()$oma
+original_int_margins <- par()$mar
+par(oma = c(0,0,0,0), mar = c(5.1,6.1,4.1,2.1)) # tlbr
+
+plot_pairwise_distances_with_MRM(title = "Phylogeny does not structures \n mimicry community composition", cex_title = 1.3, 
+                                 y = pairwise_Ist_vec[sample_indices], x = pairwise_BPD_vec[sample_indices], 
+                                 y_lab = bquote('Pairwise' ~I[ST]), x_lab = "Phylogenetic turnover (Baselga's PBD)", 
+                                 cex_axis = 1.3, cex_lab = 1.4, panel_letter = "D",
+                                 beta_value = beta_value, p_value = p_value, regression = reg_PBD)
+
+par(oma = original_ext_margins, mar = original_int_margins)
+
+dev.off()
 
 
 

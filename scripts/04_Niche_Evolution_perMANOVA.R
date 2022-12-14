@@ -862,6 +862,8 @@ par(oma = original_ext_margins, mar = original_int_margins, mfrow = c(1,1))
 dev.off()
 
 
+### Add manually results from MRM ###
+
 
 ##### 11/ Plot partial Mantel test and perMANOVA histogram together #####
 

@@ -85,7 +85,7 @@ unit_BC_dist <- vegdist(x = t(com_unit_mat_783), method = "bray") # Compute diss
 saveRDS(unit_BC_dist, file = "./outputs/Community_Structure/unit_BC_dist.rds")
 save(unit_BC_dist, file = "./outputs/Community_Structure/unit_BC_dist.RData")
 
-# Load directly the vector of BD distances among all units
+# Load directly the vector of BC distances among all units
 unit_BC_dist <- readRDS(file = "./outputs/Community_Structure/unit_BC_dist.rds")
 OMU_proba_stack <- readRDS(file = "./input_data/SDM_stacks/All_OMU_stack_Jaccard.80.rds")
 

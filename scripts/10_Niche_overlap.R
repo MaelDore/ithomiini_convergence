@@ -335,9 +335,9 @@ build_hypervolume_gaussian_KDE_models(data = Available_env_data, # Dataframe wit
 ## If too long, set manually the number of point per sample to a lower value
 
 
-### 3.5/ Rasterize into smoothed density of environmental availiability ####
+### 3.5/ Rasterize into smoothed density of environmental availability ####
 
-# Create raster template based on the first 2D of the environment availiability hypervolume
+# Create raster template based on the first 2D of the environment availability hypervolume
 ?raster::raster(x)
 
 # Load environment availability hypervolume

@@ -33,6 +33,11 @@ All content is available on
 
 ## Contents
 
+-   [:file_folder: **figures_for_article**](figures_for_article/)
+    directory contains high quality PDF and TIF versions of the
+    Graphical Abstract and Figures displayed in the main text of the
+    article.
+
 -   [:file_folder: **functions**](functions/) directory contains all the
     homemade functions called in the scripts during the analyses.
 

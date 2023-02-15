@@ -6,7 +6,7 @@
 This repository contains the code and data used to carry out analyses
 for this research article:
 
-**Doré et al., 2022 - Mutualistic interactions shape global spatial
+**Doré et al., 2023 - Mutualistic interactions shape global spatial
 congruence and climatic niche evolution in Neotropical mimetic
 butterflies**
 
@@ -92,7 +92,7 @@ URL](/archive/master.zip). After unzipping:
 Please cite this research article as:
 
 > Doré, M., Willmott, K., Lavergne, S., Chazot, N., Freitas, A. V. L.,
-> Fontaine, C., & Elias, M. (2022). Mutualistic interactions shape
+> Fontaine, C., & Elias, M. (2023). Mutualistic interactions shape
 > global spatial congruence and climatic niche evolution in Neotropical
 > mimetic butterflies.
 

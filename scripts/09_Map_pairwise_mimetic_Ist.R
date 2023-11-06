@@ -615,7 +615,7 @@ map_pairwise_distances_from_stack <- function (variables_stack,
                                                disaggregate = T, # To resample in the intial resolution for final rasters
                                                center = T, # Apply centering of variables before computing distances
                                                scale = T, # Apply scaling of variables before computing distances
-                                               maxit = 20, # Maximum numbe rof iterations for the NMDS optimization
+                                               maxit = 20, # Maximum number of iterations for the NMDS optimization
                                                NMDS_plot = T, # To plot community coordinates in 2D and 3D scatterplots 
                                                RGB_plot = T)  # To plot rasters of pairwise community dissimilarity in RGB color bands and a composite RGB layer
 {
@@ -777,7 +777,7 @@ pairwise_climate_RGB_map <- map_pairwise_distances_from_stack(variables_stack = 
                                                               disaggregate = T, # To resample in the intial resolution for final rasters
                                                               center = T, # Apply centering of variables before computing distances
                                                               scale = T, # Apply scaling of variables before computing distances
-                                                              maxit = 20, # Maximum numbe rof iterations for the NMDS optimization
+                                                              maxit = 20, # Maximum number of iterations for the NMDS optimization
                                                               NMDS_plot = T, # To plot community coordinates in 2D and 3D scatterplots 
                                                               RGB_plot = T) 
 
